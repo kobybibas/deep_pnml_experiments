@@ -92,7 +92,7 @@ class TrainClass:
             loss = self.criterion(outputs, labels)  # Negetive log-loss
             _, predicted = torch.max(outputs.data, 1)
             correct += (predicted == labels).sum().item()
-            train_loss += loss
+            train_loss += loss * len(images)  # loss sum for all the batch
 
             # Back-propagation
             loss.backward()
@@ -114,7 +114,7 @@ class TrainClass:
 
                 outputs = self.model(data)
                 loss = self.criterion(outputs, labels)
-                test_loss += loss
+                test_loss += loss * len(data)  # loss sum for all the batch
                 _, predicted = torch.max(outputs.data, 1)
                 correct += (predicted == labels).sum().item()
 
