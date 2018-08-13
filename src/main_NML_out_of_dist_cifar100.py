@@ -5,6 +5,7 @@ from dataset_utilities import insert_sample_to_dataset
 from resnet import resnet20, load_pretrained_resnet20_cifar10_model
 from dataset_utilities import create_cifar10_dataloaders, create_cifar100_dataloaders
 import numpy as np
+import torch
 import time
 import json
 import os
@@ -29,6 +30,21 @@ trainloader, testloader, classes = create_cifar10_dataloaders(data_folder, param
 _, testloader100_cifar100, classes_cifar100 = create_cifar100_dataloaders(data_folder,
                                                                           params['batch_size'],
                                                                           params['num_workers'])
+dataloaders = {'train': trainloader, 'test': testloader}
+
+################
+# Run basic training- so the base model will be in the same conditions as NML model
+logger.logger.info('Execute basic training')
+model_base = load_pretrained_resnet20_cifar10_model(resnet20())
+model_base = torch.nn.DataParallel(model_base) if torch.cuda.device_count() > 1 else model_base
+train_class = TrainClass(filter(lambda p: p.requires_grad, model_base.parameters()),
+                         params['lr'], params['momentum'], params['step_size'],
+                         params['gamma'], params['weight_decay'],
+                         logger.logger,
+                         models_save_path=logger.output_folder)
+train_class.eval_test_during_train = False
+model_base, train_loss, test_loss = train_class.train_model(model_base, dataloaders, params['epochs'])
+model_base = model_base.module if torch.cuda.device_count() > 1 else model_base
 
 ############################
 # Iterate over test dataset
@@ -51,15 +67,16 @@ for idx in range(params['test_start_idx'], params['test_end_idx']+1):
         dataloaders = {'train': trainloader_with_sample, 'test': testloader}
 
         # Train model
-        train_class = TrainClass(model_base.parameters(),
+        model = load_pretrained_resnet20_cifar10_model(resnet20())
+        model = torch.nn.DataParallel(model) if torch.cuda.device_count() > 1 else model
+        train_class = TrainClass(filter(lambda p: p.requires_grad, model.parameters()),
                                  params['lr'], params['momentum'], params['step_size'],
                                  params['gamma'], params['weight_decay'],
                                  logger.logger,
                                  models_save_path=logger.output_folder)
         train_class.eval_test_during_train = False
-        train_class.eval_test_in_end = False
-        train_class.print_during_train = True  # False
-        model, train_loss, test_loss = train_class.train_model(model_base, dataloaders, params['epochs'])
+        model, train_loss, test_loss = train_class.train_model(model, dataloaders, params['epochs'])
+        model = model.module if torch.cuda.device_count() > 1 else model
         time_trained_label = time.time() - time_trained_label_start
 
         # Add to dict and print

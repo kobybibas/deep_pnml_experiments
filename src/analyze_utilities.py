@@ -47,12 +47,15 @@ def compute_log_loss(normalized_prob, true_label):
 
 def get_normalization_factor_from_dict(results_dict):
     normalization_factor_list = []
+    is_correct_list = []
     for keys in results_dict:
         sample_dict = results_dict[keys]
         prob, true_label, predicted_label, _ = extract_probabilities_list(sample_dict)
-        _, normalization_factor = execute_normalize_prob(prob)
+        normalized_prob, normalization_factor = execute_normalize_prob(prob)
+
         normalization_factor_list.append(normalization_factor)
-    return normalization_factor_list
+        is_correct_list.append(np.argmax(normalized_prob) == true_label)
+    return normalization_factor_list, is_correct_list
 
 
 def get_ERM_log_loss_from_dict(results_dict):

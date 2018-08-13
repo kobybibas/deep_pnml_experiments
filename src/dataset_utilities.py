@@ -15,6 +15,12 @@ def insert_sample_to_dataset(trainloader, sample_to_insert_data, sample_to_inser
                                                            sample_to_insert_data_expended))
     dataset_train_with_sample.train_labels = np.concatenate((trainloader.dataset.train_labels,
                                                              sample_to_insert_label_expended))
+
+    # # Insert sample to train dataset - make it the only sample for DEBUG
+    # dataset_train_with_sample = copy.deepcopy(trainloader.dataset)
+    # dataset_train_with_sample.train_data = sample_to_insert_data_expended
+    # dataset_train_with_sample.train_labels = sample_to_insert_label_expended
+
     # Create new dataloader
     trainloader_with_sample = data.DataLoader(dataset_train_with_sample,
                                               batch_size=trainloader.batch_size,
@@ -27,12 +33,17 @@ def create_cifar10_dataloaders(data_dir, batch_size, num_workers):
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
 
+    # trainset = datasets.CIFAR10(root=data_dir,
+    #                             train=True,
+    #                             download=True,
+    #                             transform=transforms.Compose([transforms.RandomHorizontalFlip(),
+    #                                                           transforms.RandomCrop(32, 4),
+    #                                                           transforms.ToTensor(),
+    #                                                           normalize]))
     trainset = datasets.CIFAR10(root=data_dir,
                                 train=True,
                                 download=True,
-                                transform=transforms.Compose([transforms.RandomHorizontalFlip(),
-                                                              transforms.RandomCrop(32, 4),
-                                                              transforms.ToTensor(),
+                                transform=transforms.Compose([transforms.ToTensor(),
                                                               normalize]))
     trainloader = data.DataLoader(trainset,
                                   batch_size=batch_size,

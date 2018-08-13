@@ -8,6 +8,7 @@ from torch import nn
 import sys
 import logging
 import pathlib
+import copy
 
 
 class TrainClass:
@@ -30,14 +31,15 @@ class TrainClass:
                                    momentum=momentum,
                                    weight_decay=weight_decay)
         self.criterion = nn.CrossEntropyLoss()
-        self.scheduler = optim.lr_scheduler.StepLR(self.optimizer,
-                                                   step_size=step_size,
-                                                   gamma=gamma)
+        self.scheduler = optim.lr_scheduler.MultiStepLR(self.optimizer,
+                                                        milestones=step_size,
+                                                        gamma=gamma)
+
         # Create save path if not exists
         pathlib.Path(self.save_path).mkdir(parents=True, exist_ok=True)
 
     def train_model(self, model, dataloaders, num_epochs=10):
-
+        # self.model = copy.deepcopy(model)
         self.model = model.cuda() if torch.cuda.is_available() else model
         self.num_epochs = num_epochs
         train_loss, train_acc = torch.tensor([-1.]), torch.tensor([-1.])
@@ -54,11 +56,10 @@ class TrainClass:
                 test_loss, test_acc = torch.tensor([-1.]), torch.tensor([-1.])
             epoch_time = time.time() - epoch_start_time
 
-            if self.print_during_train is True:
-                self.logger.info('[%d/%d] [train test] loss =[%f %f], acc=[%f %f] epoch_time=%f' %
-                                 (epoch, self.num_epochs-1,
-                                  train_loss, test_loss, train_acc, test_acc,
-                                  epoch_time))
+            self.logger.info('[%d/%d] [train test] loss =[%f %f], acc=[%f %f] epoch_time=%f' %
+                             (epoch, self.num_epochs-1,
+                              train_loss, test_loss, train_acc, test_acc,
+                              epoch_time))
         test_loss, test_acc = self.test(dataloaders['test'])
 
         # Print and save
@@ -72,6 +73,10 @@ class TrainClass:
 
     def train(self, train_loader):
         self.model.train()
+
+        # Turn off batch normalization update
+        self.model = self.model.apply(set_bn_eval)
+
         train_loss = 0
         correct = 0
         # Iterate over dataloaders
@@ -134,3 +139,10 @@ def eval_single_sample(model, test_sample_data):
     prob = F.softmax(output, dim=-1)
     prob = prob.cpu().detach().numpy().round(16).tolist()[0]
     return prob, pred
+
+
+def set_bn_eval(model):
+    classname = model.__class__.__name__
+    if classname.find('BatchNorm') != -1:
+        model.eval()
+
