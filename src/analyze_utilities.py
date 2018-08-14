@@ -16,7 +16,7 @@ def extract_probabilities_list(evaluation_dict):
         if trained_label.isdigit():
             prob_on_trained = evaluation_dict[trained_label]['prob'][int(trained_label)]
             prob_all.append(prob_on_trained)
-    predicted_label = np.argmax(prob_all)
+    predicted_label = np.argmax(prob_all) if len(prob_all) > 0 else None
 
     return prob_all, true_label, predicted_label, prob_org
 

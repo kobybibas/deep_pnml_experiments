@@ -14,10 +14,9 @@ import os
 with open(os.path.join('src', 'params.json')) as f:
     params = json.load(f)
 
-# Create logger
+# Create logger and save params to output folder
 logger = Logger(experiment_type='OutOfDist_CIFR100', output_root='output')
-
-# Save params to output folder
+logger.logger.info('OutputDirectory: %s' % logger.output_folder)
 with open(os.path.join(logger.output_folder, 'params.json'), 'w', encoding='utf8') as outfile:
     outfile.write(json.dumps(params, indent=4, sort_keys=True))
 

@@ -12,10 +12,9 @@ import os
 with open(os.path.join('src', 'params.json')) as f:
     params = json.load(f)
 
-# Create logger
+# Create logger and save params to output folder
 logger = Logger(experiment_type='ERM', output_root='output')
-
-# Save params to output folder
+logger.logger.info('OutputDirectory: %s' % logger.output_folder)
 with open(os.path.join(logger.output_folder, 'params.json'), 'w', encoding='utf8') as outfile:
     outfile.write(json.dumps(params, indent=4, sort_keys=True))
 
@@ -28,8 +27,7 @@ dataloaders = {'train': trainloader, 'test': testloader}
 ################
 # Load model
 logger.logger.info('Load model')
-model = resnet20()  # ResNet18
-model = load_pretrained_resnet20_cifar10_model(model)
+model = load_pretrained_resnet20_cifar10_model(resnet20() )
 
 ################
 # Train
@@ -41,15 +39,18 @@ train_class = TrainClass(model.parameters(),
                          models_save_path=logger.output_folder)
 train_class.eval_test_during_train = True
 model, train_loss, test_loss = train_class.train_model(model, dataloaders, params['epochs'])
-print('Finish train: %f[sec]' % (time.time() - time_start))
+logger.logger.info('Finish train: %f[sec]' % (time.time() - time_start))
 
 model.eval()
-for idx in range(100):
+for idx in range(len(testloader.dataset)):
 
-    test_data, test_label = trainloader.testset[idx]
-    prob, pred = eval_single_sample(model, testloader.testset.transform(test_data))
+    test_data, test_label = testloader.dataset.test_data[idx], testloader.dataset.test_labels[idx]
+    prob, pred = eval_single_sample(model, testloader.dataset.transform(test_data))
+
+    logger.logger.info('idx=%d, true_label=[%d,%s]' % (idx, test_label,  classes[test_label]))
 
     # Save to file
-    logger.add_entry_to_results_dict(idx, test_label, 'prob', prob, train_loss, test_loss)
+    logger.add_entry_to_results_dict(idx, test_label, 'prob', prob, train_loss, test_loss, prob)
     logger.save_json_file()
+logger.logger.info('---Finish All!! ---')
 
