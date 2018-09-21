@@ -23,7 +23,7 @@
         "initial_training": {
             "do_initial_training": true,
             "pretrained_model_path": "",
-            "epochs": 250,
+            "epochs": 450,
             "lr": 0.1,
             "momentum": 0.9,
             "step_size": [50, 150, 250],
