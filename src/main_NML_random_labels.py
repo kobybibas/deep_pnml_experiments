@@ -22,8 +22,8 @@ with open(os.path.join('src', 'params.json')) as f:
     params = json.load(f)
 
 # Create logger and save params to output folder
-# logger = Logger(experiment_type='Random_Labels', output_root='output')
-logger = Logger(experiment_type='TMP', output_root='output')
+logger = Logger(experiment_type='Random_Labels', output_root='output')
+# logger = Logger(experiment_type='TMP', output_root='output')
 logger.logger.info('OutputDirectory: %s' % logger.output_folder)
 with open(os.path.join(logger.output_folder, 'params.json'), 'w', encoding='utf8') as outfile:
     outfile.write(json.dumps(params, indent=4, sort_keys=True))
