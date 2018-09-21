@@ -1,8 +1,10 @@
 from __future__ import print_function
-from torchvision import transforms, datasets
-from torch.utils import data
-import numpy as np
+
 import copy
+
+import numpy as np
+from torch.utils import data
+from torchvision import transforms, datasets
 
 
 def insert_sample_to_dataset(trainloader, sample_to_insert_data, sample_to_insert_label):
@@ -84,7 +86,7 @@ def create_cifar100_dataloaders(data_dir, batch_size, num_workers):
                                 train=False,
                                 download=True,
                                 transform=transforms.Compose([transforms.ToTensor(),
-                                                             normalize]))
+                                                              normalize]))
     testloader = data.DataLoader(testset,
                                  batch_size=batch_size,
                                  shuffle=False,
@@ -112,3 +114,108 @@ def generate_noise_sample():
     random_sample_data = np.random.randint(256, size=(32, 32, 3), dtype='uint8')
     random_sample_label = -1
     return random_sample_data, random_sample_label
+
+
+class CIFAR10RandomLabels(datasets.CIFAR10):
+    """CIFAR10 dataset, with support for randomly corrupt labels.
+
+    Params
+    ------
+    corrupt_prob: float
+        Default 0.0. The probability of a label being replaced with
+        random label.
+    num_classes: int
+        Default 10. The number of classes in the dataset.
+    """
+
+    def __init__(self, corrupt_prob=0.0, num_classes=10, **kwargs):
+        super(CIFAR10RandomLabels, self).__init__(**kwargs)
+        self.n_classes = num_classes
+        if corrupt_prob > 0:
+            self.corrupt_labels(corrupt_prob)
+
+    def corrupt_labels(self, corrupt_prob):
+        labels = np.array(self.train_labels if self.train else self.test_labels)
+        np.random.seed(12345)
+        mask = np.random.rand(len(labels)) <= corrupt_prob
+        rnd_labels = np.random.choice(self.n_classes, mask.sum())
+        labels[mask] = rnd_labels
+        # we need to explicitly cast the labels from npy.int64 to
+        # builtin int type, otherwise pytorch will fail...
+        labels = [int(x) for x in labels]
+
+        if self.train:
+            self.train_labels = labels
+        else:
+            self.test_labels = labels
+
+
+def create_cifar10_random_label_dataloaders(data_dir, batch_size, num_workers, label_corrupt_prob=1.0):
+    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     std=[0.229, 0.224, 0.225])
+
+    # trainset = datasets.CIFAR10(root=data_dir,
+    #                             train=True,
+    #                             download=True,
+    #                             transform=transforms.Compose([transforms.RandomHorizontalFlip(),
+    #                                                           transforms.RandomCrop(32, 4),
+    #                                                           transforms.ToTensor(),
+    #                                                           normalize]))
+    trainset = CIFAR10RandomLabels(root=data_dir,
+                                   train=True,
+                                   download=True,
+                                   transform=transforms.Compose([transforms.ToTensor(),
+                                                                 normalize]),
+                                   corrupt_prob=label_corrupt_prob)
+    trainloader = data.DataLoader(trainset,
+                                  batch_size=batch_size,
+                                  shuffle=False,
+                                  num_workers=num_workers)
+
+    testset = CIFAR10RandomLabels(root=data_dir,
+                                  train=False,
+                                  download=True,
+                                  transform=transforms.Compose([transforms.ToTensor(),
+                                                                normalize]),
+                                  corrupt_prob=label_corrupt_prob)
+    testloader = data.DataLoader(testset,
+                                 batch_size=batch_size,
+                                 shuffle=False,
+                                 num_workers=num_workers)
+    classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+
+    return trainloader, testloader, classes
+
+
+def create_cifar10_dataloaders_with_training_subset(data_dir, batch_size, num_workers, trainset_size):
+    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                     std=[0.229, 0.224, 0.225])
+
+    np.random.seed(12345)
+    trainset = datasets.CIFAR10(root=data_dir,
+                                train=True,
+                                download=True,
+                                transform=transforms.Compose([transforms.ToTensor(),
+                                                              normalize]))
+
+    # Get trainset subset
+    trainset.train_data = trainset.train_data[:trainset_size]
+    trainset.train_labels = trainset.train_labels[:trainset_size]
+
+    trainloader = data.DataLoader(trainset,
+                                  batch_size=batch_size,
+                                  shuffle=False,
+                                  num_workers=num_workers)
+
+    testset = datasets.CIFAR10(root=data_dir,
+                               train=False,
+                               download=True,
+                               transform=transforms.Compose([transforms.ToTensor(),
+                                                             normalize]))
+    testloader = data.DataLoader(testset,
+                                 batch_size=batch_size,
+                                 shuffle=False,
+                                 num_workers=num_workers)
+    classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+
+    return trainloader, testloader, classes

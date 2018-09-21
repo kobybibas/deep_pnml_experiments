@@ -1,28 +1,25 @@
-import os
-import time
 import logging
-import torch
-import torch.optim as optim
-import torch.nn.functional as F
-from torch import nn
 import sys
-import logging
-import pathlib
-import copy
+import time
+from copy import deepcopy
+
+import torch
+import torch.nn.functional as F
+import torch.optim as optim
+from torch import nn
+
+from dataset_utilities import insert_sample_to_dataset
 
 
 class TrainClass:
     def __init__(self, params_to_train, learning_rate, momentum, step_size, gamma, weight_decay,
-                 logger=None,
-                 models_save_path='output'):
+                 logger=None):
 
         self.num_epochs = 20
-        self.save_path = models_save_path
         self.logger = logger if logger is not None else logging.StreamHandler(sys.stdout)
         self.model = None
         self.eval_test_during_train = True
         self.eval_test_in_end = True
-        self.save_name = 'cifar10_trained_model.pt'
         self.print_during_train = True
 
         # Optimizer
@@ -34,9 +31,7 @@ class TrainClass:
         self.scheduler = optim.lr_scheduler.MultiStepLR(self.optimizer,
                                                         milestones=step_size,
                                                         gamma=gamma)
-
-        # Create save path if not exists
-        pathlib.Path(self.save_path).mkdir(parents=True, exist_ok=True)
+        self.freeze_batch_norm = True
 
     def train_model(self, model, dataloaders, num_epochs=10):
         # self.model = copy.deepcopy(model)
@@ -44,6 +39,8 @@ class TrainClass:
         self.num_epochs = num_epochs
         train_loss, train_acc = torch.tensor([-1.]), torch.tensor([-1.])
         test_loss, test_acc = torch.tensor([-1.]), torch.tensor([-1.])
+        epoch = 0
+        epoch_time = 0
 
         # Loop on epochs
         for epoch in range(self.num_epochs):
@@ -57,7 +54,7 @@ class TrainClass:
             epoch_time = time.time() - epoch_start_time
 
             self.logger.info('[%d/%d] [train test] loss =[%f %f], acc=[%f %f] epoch_time=%f' %
-                             (epoch, self.num_epochs-1,
+                             (epoch, self.num_epochs - 1,
                               train_loss, test_loss, train_acc, test_acc,
                               epoch_time))
         test_loss, test_acc = self.test(dataloaders['test'])
@@ -75,13 +72,13 @@ class TrainClass:
         self.model.train()
 
         # Turn off batch normalization update
-        self.model = self.model.apply(set_bn_eval)
+        if self.freeze_batch_norm is True:
+            self.model = self.model.apply(set_bn_eval)
 
         train_loss = 0
         correct = 0
         # Iterate over dataloaders
         for iter_num, (images, labels) in enumerate(train_loader):
-
             # Adjust to CUDA
             images = images.cuda() if torch.cuda.is_available() else images
             labels = labels.cuda() if torch.cuda.is_available() else labels
@@ -89,7 +86,7 @@ class TrainClass:
             # Forward
             self.optimizer.zero_grad()
             outputs = self.model(images)
-            loss = self.criterion(outputs, labels)  # Negetive log-loss
+            loss = self.criterion(outputs, labels)  # Negative log-loss
             _, predicted = torch.max(outputs.data, 1)
             correct += (predicted == labels).sum().item()
             train_loss += loss * len(images)  # loss sum for all the batch
@@ -146,3 +143,50 @@ def set_bn_eval(model):
     if classname.find('BatchNorm') != -1:
         model.eval()
 
+
+def execute_nml_training(train_params, dataloaders_input, idx, model_base_input, logger):
+    # Check train_params contains all required keys
+    required_keys = ['lr', 'momentum', 'step_size', 'gamma', 'weight_decay', 'epochs']
+    for key in required_keys:
+        if key not in train_params:
+            logger.logger.error('The key: %s is not in train_params' % key)
+            raise ValueError('The key: %s is not in train_params' % key)
+
+    # Extract sample from dataloader
+    sample_test_data = dataloaders_input['test'].dataset.test_data[idx]
+    sample_test_true_label = dataloaders_input['test'].dataset.test_labels[idx]
+    classes = dataloaders_input['classes']
+
+    # Iteration of all labels
+    for trained_label in range(len(classes)):
+        time_trained_label_start = time.time()
+
+        # Insert test sample to train dataset
+        dataloaders = deepcopy(dataloaders_input)
+        trainloader_with_sample = insert_sample_to_dataset(dataloaders['train'], sample_test_data, trained_label)
+        dataloaders['train'] = trainloader_with_sample
+
+        # Train model
+        model = deepcopy(model_base_input)
+        model = torch.nn.DataParallel(model) if torch.cuda.device_count() > 1 else model
+        train_class = TrainClass(filter(lambda p: p.requires_grad, model.parameters()),
+                                 train_params['lr'], train_params['momentum'], train_params['step_size'],
+                                 train_params['gamma'], train_params['weight_decay'],
+                                 logger.logger)
+        train_class.eval_test_during_train = False
+        train_class.freeze_batch_norm = True
+        model, train_loss, test_loss = train_class.train_model(model, dataloaders, train_params['epochs'])
+        model = model.module if torch.cuda.device_count() > 1 else model
+        time_trained_label = time.time() - time_trained_label_start
+
+        # Evaluate trained model
+        prob, pred = eval_single_sample(model, dataloaders['test'].dataset.transform(sample_test_data))
+
+        # Save to file
+        logger.add_entry_to_results_dict(idx, str(trained_label), prob, train_loss, test_loss)
+        logger.logger.info(
+            'idx=%d trained_label=[%d,%s], true_label=[%d,%s], loss [train, test]=[%f %f], time=%4.2f[sec]' %
+            (idx, trained_label, classes[trained_label],
+             sample_test_true_label, classes[sample_test_true_label],
+             train_loss, test_loss,
+             time_trained_label))

@@ -7,7 +7,6 @@ import json
 import time
 import os
 
-
 # Training params
 with open(os.path.join('src', 'params.json')) as f:
     params = json.load(f)
@@ -27,7 +26,7 @@ dataloaders = {'train': trainloader, 'test': testloader}
 ################
 # Load model
 logger.logger.info('Load model')
-model = load_pretrained_resnet20_cifar10_model(resnet20() )
+model = load_pretrained_resnet20_cifar10_model(resnet20())
 
 ################
 # Train
@@ -43,14 +42,13 @@ logger.logger.info('Finish train: %f[sec]' % (time.time() - time_start))
 
 model.eval()
 for idx in range(len(testloader.dataset)):
-
     test_data, test_label = testloader.dataset.test_data[idx], testloader.dataset.test_labels[idx]
     prob, pred = eval_single_sample(model, testloader.dataset.transform(test_data))
 
-    logger.logger.info('idx=%d, true_label=[%d,%s]' % (idx, test_label,  classes[test_label]))
+    logger.logger.info('idx=%d, true_label=[%d,%s]' % (idx, test_label, classes[test_label]))
 
     # Save to file
-    logger.add_entry_to_results_dict(idx, test_label, 'prob', prob, train_loss, test_loss, prob)
+    logger.add_entry_to_results_dict(idx, test_label, 'prob', prob, train_loss, test_loss)
+    logger.add_org_prob_to_results_dict(idx, prob)
     logger.save_json_file()
 logger.logger.info('---Finish All!! ---')
-

@@ -1,8 +1,9 @@
-import logging
 import json
+import logging
 import os
 import sys
 import time
+
 import pathlib
 
 
@@ -47,20 +48,20 @@ class Logger:
                       indent=4,
                       ensure_ascii=False)
 
-    def add_entry_to_results_dict(self, test_idx_sample, true_label, prob_key_str, prob,
-                                  train_loss, test_loss, prob_org):
-
+    def add_entry_to_results_dict(self, test_idx_sample, prob_key_str, prob,
+                                  train_loss, test_loss):
         if str(test_idx_sample) not in self.results_dict:
             self.results_dict[str(test_idx_sample)] = {}
-            self.results_dict[str(test_idx_sample)]['true_label'] = true_label
 
         self.results_dict[str(test_idx_sample)][prob_key_str] = {}
         self.results_dict[str(test_idx_sample)][prob_key_str]['prob'] = prob
         self.results_dict[str(test_idx_sample)][prob_key_str]['train_loss'] = train_loss
         self.results_dict[str(test_idx_sample)][prob_key_str]['test_loss'] = test_loss
 
+    def add_org_prob_to_results_dict(self, test_idx_sample, prob_org, true_label):
+        if str(test_idx_sample) not in self.results_dict:
+            self.results_dict[str(test_idx_sample)] = {}
+
         self.results_dict[str(test_idx_sample)]['original'] = {}
         self.results_dict[str(test_idx_sample)]['original']['prob'] = prob_org
-
-
-
+        self.results_dict[str(test_idx_sample)]['true_label'] = true_label
