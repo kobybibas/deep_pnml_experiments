@@ -150,7 +150,8 @@ class CIFAR10RandomLabels(datasets.CIFAR10):
             self.test_labels = labels
 
 
-def create_cifar10_random_label_dataloaders(data_dir, batch_size, num_workers, label_corrupt_prob=1.0):
+def create_cifar10_random_label_dataloaders(data_dir, batch_size, num_workers, label_corrupt_prob=1.0,
+                                            ):
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
 
@@ -187,7 +188,8 @@ def create_cifar10_random_label_dataloaders(data_dir, batch_size, num_workers, l
     return trainloader, testloader, classes
 
 
-def create_cifar10_dataloaders_with_training_subset(data_dir, batch_size, num_workers, trainset_size):
+def create_cifar10_dataloaders_with_training_subset(data_dir, batch_size, num_workers, trainset_size,
+                                                    adjust_sgd_update=False):
     normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                      std=[0.229, 0.224, 0.225])
 
@@ -197,10 +199,18 @@ def create_cifar10_dataloaders_with_training_subset(data_dir, batch_size, num_wo
                                 download=True,
                                 transform=transforms.Compose([transforms.ToTensor(),
                                                               normalize]))
+    trainset_size_org = len(trainset)
 
     # Get trainset subset
     trainset.train_data = trainset.train_data[:trainset_size]
     trainset.train_labels = trainset.train_labels[:trainset_size]
+
+    if adjust_sgd_update is True:
+        if 50000 % trainset_size != 0:
+            raise NameError('trainset_size_org / trainset_size is not a int')
+        duplicate_trainset_num = int(trainset_size_org/trainset_size)
+        trainset_list = [trainset for _ in range(duplicate_trainset_num)]
+        trainset = data.ConcatDataset(trainset_list)
 
     trainloader = data.DataLoader(trainset,
                                   batch_size=batch_size,

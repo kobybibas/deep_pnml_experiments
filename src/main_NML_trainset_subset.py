@@ -27,7 +27,8 @@ with open(os.path.join(logger.output_folder, 'params.json'), 'w', encoding='utf8
 ################
 # Load datasets
 trainloader, testloader, classes = create_cifar10_dataloaders_with_training_subset(
-    '../data', params['batch_size'], params['num_workers'], params['trainset_size'])
+    './data', params['batch_size'], params['num_workers'], params['trainset_size'],
+    params['adjust_sgd_update'])
 dataloaders = {'train': trainloader, 'test': testloader, 'classes': classes}
 
 ################

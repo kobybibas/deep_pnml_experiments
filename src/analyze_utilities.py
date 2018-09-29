@@ -36,13 +36,13 @@ def execute_normalize_prob(prob_list):
     # Normalize the probabilities to be valid distribution
     # Return list of probabilities along with the normalization factor which was used.
     normalization_factor = np.sum(prob_list)
-    normalized_prob = np.array(prob_list) / normalization_factor
+    normalized_prob = np.array(prob_list) / (normalization_factor + np.finfo(float).eps)
     return normalized_prob, normalization_factor
 
 
 def compute_log_loss(normalized_prob, true_label):
     # Compute the log loss
-    return -np.log10(normalized_prob[true_label])
+    return -np.log10(normalized_prob[true_label]+np.finfo(float).eps)
 
 
 def get_ERM_log_loss_from_dict(results_dict):
