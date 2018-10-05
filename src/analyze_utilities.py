@@ -36,13 +36,13 @@ def execute_normalize_prob(prob_list):
     # Normalize the probabilities to be valid distribution
     # Return list of probabilities along with the normalization factor which was used.
     normalization_factor = np.sum(prob_list)
-    normalized_prob = np.array(prob_list) / (normalization_factor + np.finfo(float).eps)
+    normalized_prob = np.array(prob_list) / (normalization_factor)  # + np.finfo(float).eps)
     return normalized_prob, normalization_factor
 
 
 def compute_log_loss(normalized_prob, true_label):
     # Compute the log loss
-    return -np.log10(normalized_prob[true_label]+np.finfo(float).eps)
+    return -np.log10(normalized_prob[true_label] + np.finfo(float).eps)
 
 
 def get_ERM_log_loss_from_dict(results_dict):
@@ -80,10 +80,9 @@ def get_NML_log_loss_from_dict(results_dict):
     return loss_NML_list, normalization_factor_list, acc_NML, is_correct_list_NML_list, test_sample_idx_list
 
 
-def extract_probabilities_form_train_loss_list(evaluation_dict):
+def extract_probabilities_form_train_loss_list(evaluation_dict, trainset_size=50000):
     # if the sample was trained with label 2, extract the prob to be 2 ...
     # return list of probabilities
-    trainset_size = 50001
 
     prob_all = []
     true_label = evaluation_dict['true_label']
@@ -93,14 +92,14 @@ def extract_probabilities_form_train_loss_list(evaluation_dict):
         # One of the key is a string, ignore it
         if trained_label.isdigit():
             train_loss = evaluation_dict[trained_label]['train_loss']
-            prob_on_trained = np.exp(-trainset_size * train_loss)
+            prob_on_trained = np.exp(-(trainset_size + 1) * train_loss)  # adding 1 for the test sample
             prob_all.append(prob_on_trained)
     predicted_label = np.argmax(prob_all) if len(prob_all) > 0 else None
 
     return prob_all, true_label, predicted_label, prob_org
 
 
-def get_NML_log_loss_of_the_series_from_dict(results_dict):
+def get_NML_log_loss_of_the_series_from_dict(results_dict, trainset_size=50000):
     loss_NML_list = []
     is_correct_list = []
     normalization_factor_list = []
@@ -108,7 +107,7 @@ def get_NML_log_loss_of_the_series_from_dict(results_dict):
     for keys in results_dict:
         sample_dict = results_dict[keys]
         prob, true_label, predicted_label, _ = \
-            extract_probabilities_form_train_loss_list(sample_dict)
+            extract_probabilities_form_train_loss_list(sample_dict, trainset_size)
         normalized_prob, normalization_factor = execute_normalize_prob(prob)
 
         # Protection against out of distribution
@@ -162,5 +161,5 @@ if __name__ == "__main__":
     with open(json_file_name) as data_file:
         results_dict = json.load(data_file)
     # loss_jinni_list, acc = get_jinni_log_loss_from_dict(results_dict)
-    loss_NML_list, normalization_factor_list, acc_NML, is_correct_list = \
+    loss_NML_list, normalization_factor_list, acc_NML, is_correct_list_NML_list, test_sample_idx_list = \
         get_NML_log_loss_of_the_series_from_dict(results_dict)

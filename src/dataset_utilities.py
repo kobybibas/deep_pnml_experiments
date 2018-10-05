@@ -209,12 +209,12 @@ def create_cifar10_dataloaders_with_training_subset(data_dir, batch_size, num_wo
         if 50000 % trainset_size != 0:
             raise NameError('trainset_size_org / trainset_size is not a int')
         duplicate_trainset_num = int(trainset_size_org/trainset_size)
-        trainset_list = [trainset for _ in range(duplicate_trainset_num)]
-        trainset = data.ConcatDataset(trainset_list)
+        trainset.train_data = np.repeat(trainset.train_data, duplicate_trainset_num, axis=0)
+        trainset.train_labels = np.repeat(trainset.train_labels, duplicate_trainset_num, axis=0)
 
     trainloader = data.DataLoader(trainset,
                                   batch_size=batch_size,
-                                  shuffle=False,
+                                  shuffle=True,
                                   num_workers=num_workers)
 
     testset = datasets.CIFAR10(root=data_dir,
