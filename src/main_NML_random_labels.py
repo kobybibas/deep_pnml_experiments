@@ -37,7 +37,7 @@ trainloader, testloader, classes = create_cifar10_random_label_dataloaders(
     label_corrupt_prob=params['label_corrupt_prob'])
 dataloaders = {'train': trainloader, 'test': testloader, 'classes': classes}
 
-################§
+################
 # Run basic training- so the base model will be in the same conditions as NML model
 params_initial_training = params['initial_training']
 # model_base = resnet20()
