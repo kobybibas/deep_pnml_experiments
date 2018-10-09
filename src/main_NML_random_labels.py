@@ -55,7 +55,8 @@ if params_initial_training['do_initial_training'] is True:
     train_class.eval_test_during_train = False
     train_class.freeze_batch_norm = False
     model_base, train_loss, test_loss = train_class.train_model(model_base, dataloaders,
-                                                                params_initial_training['epochs'])
+                                                                params_initial_training['epochs'],
+                                                                params_initial_training['loss_goal'])
     model_base = model_base.module if torch.cuda.device_count() > 1 else model_base
     torch.save(model_base.state_dict(), os.path.join(logger.output_folder, 'random_labels_model_%f.pt' % train_loss))
 else:

@@ -28,7 +28,8 @@
             "momentum": 0.9,
             "step_size": [50, 150, 250],
             "gamma": 0.1,
-            "weight_decay": 0
+            "weight_decay": 0,
+            "loss_goal": 0.001
         },
         "fit_to_sample": {
             "epochs": 10,
