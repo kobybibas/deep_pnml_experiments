@@ -8,10 +8,9 @@ import torch
 
 from dataset_utilities import create_cifar10_random_label_dataloaders
 from logger_utilities import Logger
-from resnet import resnet20
-from wide_resnet import WideResNet
 from train_utilities import TrainClass, eval_single_sample
 from train_utilities import execute_nml_training
+from wide_resnet import WideResNet
 
 """
 Example of running:
@@ -26,7 +25,7 @@ params = params['random_labels']
 # Create logger and save params to output folder
 logger = Logger(experiment_type='Random_Labels', output_root='output')
 # logger = Logger(experiment_type='TMP', output_root='output')
-logger.logger.info('OutputDirectory: %s' % logger.output_folder)
+logger.info('OutputDirectory: %s' % logger.output_folder)
 with open(os.path.join(logger.output_folder, 'params.json'), 'w', encoding='utf8') as outfile:
     outfile.write(json.dumps(params, indent=4, sort_keys=True))
 
@@ -43,7 +42,7 @@ params_initial_training = params['initial_training']
 # model_base = resnet20()
 model_base = WideResNet()
 if params_initial_training['do_initial_training'] is True:
-    logger.logger.info('Execute basic training')
+    logger.info('Execute basic training')
     model_base = torch.nn.DataParallel(model_base) if torch.cuda.device_count() > 1 else model_base
     train_class = TrainClass(filter(lambda p: p.requires_grad, model_base.parameters()),
                              params_initial_training['lr'],
@@ -60,13 +59,13 @@ if params_initial_training['do_initial_training'] is True:
     model_base = model_base.module if torch.cuda.device_count() > 1 else model_base
     torch.save(model_base.state_dict(), os.path.join(logger.output_folder, 'random_labels_model_%f.pt' % train_loss))
 else:
-    logger.logger.info('Load pretrained model')
+    logger.info('Load pretrained model')
     model_base.load_state_dict(torch.load(params_initial_training['pretrained_model_path']))
     model_base = model_base.cuda() if torch.cuda.is_available() else model_base
 
 ############################
 # Iterate over test dataset
-logger.logger.info('Iterate over test dataset')
+logger.info('Iterate over test dataset')
 params_fit_to_sample = params['fit_to_sample']
 for idx in range(params_fit_to_sample['test_start_idx'], params_fit_to_sample['test_end_idx'] + 1):
     time_start_idx = time.time()
@@ -83,5 +82,5 @@ for idx in range(params_fit_to_sample['test_start_idx'], params_fit_to_sample['t
     # Log and save
     logger.save_json_file()
     time_idx = time.time() - time_start_idx
-    logger.logger.info('----- Finish NML random labels idx = %d, time=%f[sec] ----' % (idx, time_idx))
-logger.logger.info('Finish All!')
+    logger.info('----- Finish NML random labels idx = %d, time=%f[sec] ----' % (idx, time_idx))
+logger.info('Finish All!')

@@ -2,6 +2,7 @@ import json
 import os
 
 import numpy as np
+from dataset_utilities import create_cifar10_dataloaders
 
 
 def extract_probabilities_list(evaluation_dict):
@@ -45,12 +46,20 @@ def compute_log_loss(normalized_prob, true_label):
     return -np.log10(normalized_prob[true_label] + np.finfo(float).eps)
 
 
-def get_ERM_log_loss_from_dict(results_dict):
+def get_ERM_log_loss_from_dict(results_dict, is_random_labels=False):
+    if is_random_labels == True:
+        _, testloader, _ = create_cifar10_dataloaders('../data/', 1, 1)
+
     loss_ERM_list = []
     is_correct_ERM_list = []
     for keys in results_dict:
         sample_dict = results_dict[keys]
         _, true_label, _, prob_org = extract_probabilities_list(sample_dict)
+
+        # If was trained with random- extract the real label
+        if is_random_labels == True:
+            true_label = testloader.dataset.test_labels[int(keys)]
+
         loss_ERM = compute_log_loss(prob_org, true_label)
         loss_ERM_list.append(loss_ERM)
         is_correct_ERM_list.append(np.argmax(prob_org) == true_label)
@@ -59,7 +68,10 @@ def get_ERM_log_loss_from_dict(results_dict):
     return loss_ERM_list, acc_ERM, is_correct_ERM_list
 
 
-def get_NML_log_loss_from_dict(results_dict):
+def get_NML_log_loss_from_dict(results_dict, is_random_labels=False):
+    if is_random_labels == True:
+        _, testloader, _ = create_cifar10_dataloaders('../data/', 1, 1)
+
     loss_NML_list = []
     is_correct_list_NML_list = []
     normalization_factor_list = []
@@ -68,6 +80,10 @@ def get_NML_log_loss_from_dict(results_dict):
         sample_dict = results_dict[keys]
         prob, true_label, predicted_label, _ = extract_probabilities_list(sample_dict)
         normalized_prob, normalization_factor = execute_normalize_prob(prob)
+
+        # If was trained with random- extract the real label
+        if is_random_labels == True:
+            true_label = testloader.dataset.test_labels[int(keys)]
 
         # Protection against out of distribution
         if true_label in range(0, len(normalized_prob)):

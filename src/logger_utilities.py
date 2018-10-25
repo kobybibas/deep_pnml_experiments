@@ -37,6 +37,9 @@ class Logger:
         fh.setLevel(logging.DEBUG)
         self.logger.addHandler(fh)
 
+    def info(self, string_to_print):
+        self.logger.info(string_to_print)
+
     def define_json_output(self, json_file_name):
         self.json_file_name = json_file_name
 

@@ -18,7 +18,7 @@ with open(os.path.join('src', 'params.json')) as f:
 
 # Create logger and save params to output folder
 logger = Logger(experiment_type='OutOfDist_Noise', output_root='output')
-logger.logger.info('OutputDirectory: %s' % logger.output_folder)
+logger.info('OutputDirectory: %s' % logger.output_folder)
 with open(os.path.join(logger.output_folder, 'params.json'), 'w', encoding='utf8') as outfile:
     outfile.write(json.dumps(params, indent=4, sort_keys=True))
 
@@ -30,7 +30,7 @@ dataloaders = {'train': trainloader, 'test': testloader}
 
 ################
 # Run basic training- so the base model will be in the same conditions as NML model
-logger.logger.info('Execute basic training')
+logger.info('Execute basic training')
 model_base = load_pretrained_resnet20_cifar10_model(resnet20())
 model_base = torch.nn.DataParallel(model_base) if torch.cuda.device_count() > 1 else model_base
 train_class = TrainClass(filter(lambda p: p.requires_grad, model_base.parameters()),
@@ -44,7 +44,7 @@ model_base = model_base.module if torch.cuda.device_count() > 1 else model_base
 
 ################
 # Iterate over test dataset
-logger.logger.info('Iterate over test dataset')
+logger.info('Iterate over test dataset')
 for idx in range(params['test_start_idx'], params['test_end_idx'] + 1):
     time_start_idx = time.time()
 
@@ -81,16 +81,16 @@ for idx in range(params['test_start_idx'], params['test_end_idx'] + 1):
         logger.add_entry_to_results_dict(idx, sample_test_true_label, str(trained_label), prob,
                                          train_loss, test_loss, prob_org)
         logger.save_json_file()
-        logger.logger.info(
+        logger.info(
             'idx=%d trained_label=[%d,%s], true_label=[%d,%s], loss [train, test]=[%f %f], time=%4.2f[sec]'
             % (idx, trained_label, classes[trained_label],
                sample_test_true_label, 'Noise',
                train_loss, test_loss,
                time_trained_label))
         prob_str = " ".join(str(x) for x in prob)
-        logger.logger.info('    Prob: %s' % prob_str)
+        logger.info('    Prob: %s' % prob_str)
 
     time_idx = time.time() - time_start_idx
-    logger.logger.info(
+    logger.info(
         '--- Finish OutOfDist_Noise idx = %d, time=%f[sec], outputs in %s' % (idx, time_idx, logger.output_folder))
-logger.logger.info('Finish All!')
+logger.info('Finish All!')

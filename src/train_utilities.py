@@ -159,10 +159,14 @@ def execute_nml_training(train_params, dataloaders_input, idx, model_base_input,
     # Extract sample from dataloader
     sample_test_data = dataloaders_input['test'].dataset.test_data[idx]
     sample_test_true_label = dataloaders_input['test'].dataset.test_labels[idx]
-    classes = dataloaders_input['classes']
+    classes_trained = dataloaders_input['classes']
+    if 'classes_cifar100' in dataloaders_input:
+        classes_true = dataloaders_input['classes_cifar100']
+    else:
+        classes_true = classes_trained
 
     # Iteration of all labels
-    for trained_label in range(len(classes)):
+    for trained_label in range(len(classes_trained)):
         time_trained_label_start = time.time()
 
         # Insert test sample to train dataset
@@ -188,9 +192,22 @@ def execute_nml_training(train_params, dataloaders_input, idx, model_base_input,
 
         # Save to file
         logger.add_entry_to_results_dict(idx, str(trained_label), prob, train_loss, test_loss)
-        logger.logger.info(
+        logger.info(
             'idx=%d trained_label=[%d,%s], true_label=[%d,%s], loss [train, test]=[%f %f], time=%4.2f[sec]' %
-            (idx, trained_label, classes[trained_label],
-             sample_test_true_label, classes[sample_test_true_label],
+            (idx, trained_label, classes_trained[trained_label],
+             sample_test_true_label, classes_true[sample_test_true_label],
              train_loss, test_loss,
              time_trained_label))
+
+
+def freeze_resnet_layers(model, max_freeze_layer, logger):
+    ct = 0
+    for child in model.children():
+        ct += 1
+        if ct < max_freeze_layer:
+            logger.info('Freeze Layer: idx={}, name={}'.format(ct, child))
+            for param in child.parameters():
+                param.requires_grad = False
+            continue
+        logger.info('UnFreeze Layer: idx={}, name={}'.format(ct, child))
+    return model

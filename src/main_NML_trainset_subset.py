@@ -20,7 +20,7 @@ params = params['trainset_subset']
 # Create logger and save params to output folder
 logger = Logger(experiment_type='NML_trainset_subset', output_root='output')
 # logger = Logger(experiment_type='TMP', output_root='output')
-logger.logger.info('OutputDirectory: %s' % logger.output_folder)
+logger.info('OutputDirectory: %s' % logger.output_folder)
 with open(os.path.join(logger.output_folder, 'params.json'), 'w', encoding='utf8') as outfile:
     outfile.write(json.dumps(params, indent=4, sort_keys=True))
 
@@ -33,7 +33,7 @@ dataloaders = {'train': trainloader, 'test': testloader, 'classes': classes}
 
 ################
 # Run basic training
-logger.logger.info('Execute basic training')
+logger.info('Execute basic training')
 train_params = params['initial_training']
 model_base = resnet20()
 model_base = torch.nn.DataParallel(model_base) if torch.cuda.device_count() > 1 else model_base
@@ -49,7 +49,7 @@ torch.save(model_base.state_dict(), os.path.join(logger.output_folder, 'base_mod
 
 ############################
 # Iterate over test dataset
-logger.logger.info('Iterate over test dataset')
+logger.info('Iterate over test dataset')
 for idx in range(params['fit_to_sample']['test_start_idx'], params['fit_to_sample']['test_end_idx'] + 1):
     time_start_idx = time.time()
 
@@ -65,5 +65,5 @@ for idx in range(params['fit_to_sample']['test_start_idx'], params['fit_to_sampl
     # Log and save
     logger.save_json_file()
     time_idx = time.time() - time_start_idx
-    logger.logger.info('------------ Finish NML idx = %d, time=%f[sec] ------------' % (idx, time_idx))
-logger.logger.info('Finish All!')
+    logger.info('------------ Finish NML idx = %d, time=%f[sec] ------------' % (idx, time_idx))
+logger.info('Finish All!')
