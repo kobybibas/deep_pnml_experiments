@@ -45,7 +45,10 @@ model_base, train_loss, test_loss = train_class.train_model(model_base, dataload
                                                             params_fit_to_sample['epochs'])
 model_base = model_base.module if torch.cuda.device_count() > 1 else model_base
 
-
+################
+# Freeze layers
+logger.info('Freeze layer: %d' % params['freeze_layer'])
+model_base = freeze_resnet_layers(model_base, params['freeze_layer'], logger)
 
 ############################
 # Iterate over test dataset
