@@ -16,15 +16,15 @@ with open(os.path.join('src', 'params.json')) as f:
 params = params['nml_vanilla']
 
 # Create logger and save params to output folder
-# logger = Logger(experiment_type='NML', output_root='output')
-logger = Logger(experiment_type='TMP', output_root='output')
+logger = Logger(experiment_type='NML', output_root='output')
+# logger = Logger(experiment_type='TMP', output_root='output')
 logger.info('OutputDirectory: %s' % logger.output_folder)
 with open(os.path.join(logger.output_folder, 'params.json'), 'w', encoding='utf8') as outfile:
     outfile.write(json.dumps(params, indent=4, sort_keys=True))
 
 ################
 # Load datasets
-trainloader, testloader, classes = create_cifar10_dataloaders('../data', params['batch_size'], params['num_workers'])
+trainloader, testloader, classes = create_cifar10_dataloaders('./data', params['batch_size'], params['num_workers'])
 dataloaders = {'train': trainloader, 'test': testloader, 'classes': classes}
 
 ################

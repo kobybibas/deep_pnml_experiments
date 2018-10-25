@@ -38,6 +38,7 @@ train_class = TrainClass(filter(lambda p: p.requires_grad, model_base.parameters
                          params['gamma'], params['weight_decay'],
                          logger.logger,
                          models_save_path=logger.output_folder)
+# todo: use the same template as nml
 train_class.eval_test_during_train = False
 model_base, train_loss, test_loss = train_class.train_model(model_base, dataloaders, params['epochs'])
 model_base = model_base.module if torch.cuda.device_count() > 1 else model_base
