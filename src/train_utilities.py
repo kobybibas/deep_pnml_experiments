@@ -162,6 +162,8 @@ def execute_nml_training(train_params, dataloaders_input, idx, model_base_input,
     classes_trained = dataloaders_input['classes']
     if 'classes_cifar100' in dataloaders_input:
         classes_true = dataloaders_input['classes_cifar100']
+    elif 'classes_svhn' in dataloaders_input:
+        classes_true = dataloaders_input['svhn']
     else:
         classes_true = classes_trained
 

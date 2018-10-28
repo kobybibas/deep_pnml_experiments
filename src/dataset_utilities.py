@@ -6,6 +6,9 @@ import numpy as np
 from torch.utils import data
 from torchvision import transforms, datasets
 
+normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                 std=[0.229, 0.224, 0.225])
+
 
 def insert_sample_to_dataset(trainloader, sample_to_insert_data, sample_to_insert_label):
     sample_to_insert_label_expended = np.expand_dims(sample_to_insert_label, 0)
@@ -31,17 +34,32 @@ def insert_sample_to_dataset(trainloader, sample_to_insert_data, sample_to_inser
     return trainloader_with_sample
 
 
-def create_cifar10_dataloaders(data_dir, batch_size, num_workers):
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225])
+def create_svhn_dataloaders(data_dir, batch_size, num_workers):
+    trainset = datasets.SVHN(root=data_dir,
+                             split='train',
+                             download=True,
+                             transform=transforms.Compose([transforms.ToTensor(),
+                                                           normalize]))
+    trainloader = data.DataLoader(trainset,
+                                  batch_size=batch_size,
+                                  shuffle=False,
+                                  num_workers=num_workers)
 
-    # trainset = datasets.CIFAR10(root=data_dir,
-    #                             train=True,
-    #                             download=True,
-    #                             transform=transforms.Compose([transforms.RandomHorizontalFlip(),
-    #                                                           transforms.RandomCrop(32, 4),
-    #                                                           transforms.ToTensor(),
-    #                                                           normalize]))
+    testset = datasets.SVHN(root=data_dir,
+                            split='test',
+                            download=True,
+                            transform=transforms.Compose([transforms.ToTensor(),
+                                                          normalize]))
+    testloader = data.DataLoader(testset,
+                                 batch_size=batch_size,
+                                 shuffle=False,
+                                 num_workers=num_workers)
+    classes = ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')
+
+    return trainloader, testloader, classes
+
+
+def create_cifar10_dataloaders(data_dir, batch_size, num_workers):
     trainset = datasets.CIFAR10(root=data_dir,
                                 train=True,
                                 download=True,
@@ -67,15 +85,10 @@ def create_cifar10_dataloaders(data_dir, batch_size, num_workers):
 
 
 def create_cifar100_dataloaders(data_dir, batch_size, num_workers):
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225])
-
     trainset = datasets.CIFAR100(root=data_dir,
                                  train=True,
                                  download=True,
-                                 transform=transforms.Compose([transforms.RandomHorizontalFlip(),
-                                                               transforms.RandomCrop(32, 4),
-                                                               transforms.ToTensor(),
+                                 transform=transforms.Compose([transforms.ToTensor(),
                                                                normalize]))
     trainloader = data.DataLoader(trainset,
                                   batch_size=batch_size,
@@ -150,18 +163,8 @@ class CIFAR10RandomLabels(datasets.CIFAR10):
             self.test_labels = labels
 
 
-def create_cifar10_random_label_dataloaders(data_dir, batch_size, num_workers, label_corrupt_prob=1.0,
-                                            ):
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225])
-
-    # trainset = datasets.CIFAR10(root=data_dir,
-    #                             train=True,
-    #                             download=True,
-    #                             transform=transforms.Compose([transforms.RandomHorizontalFlip(),
-    #                                                           transforms.RandomCrop(32, 4),
-    #                                                           transforms.ToTensor(),
-    #                                                           normalize]))
+def create_cifar10_random_label_dataloaders(data_dir, batch_size, num_workers,
+                                            label_corrupt_prob=1.0):
     trainset = CIFAR10RandomLabels(root=data_dir,
                                    train=True,
                                    download=True,
@@ -190,9 +193,6 @@ def create_cifar10_random_label_dataloaders(data_dir, batch_size, num_workers, l
 
 def create_cifar10_dataloaders_with_training_subset(data_dir, batch_size, num_workers, trainset_size,
                                                     adjust_sgd_update=False):
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225])
-
     np.random.seed(12345)
     trainset = datasets.CIFAR10(root=data_dir,
                                 train=True,
@@ -208,7 +208,7 @@ def create_cifar10_dataloaders_with_training_subset(data_dir, batch_size, num_wo
     if adjust_sgd_update is True:
         if 50000 % trainset_size != 0:
             raise NameError('trainset_size_org / trainset_size is not a int')
-        duplicate_trainset_num = int(trainset_size_org/trainset_size)
+        duplicate_trainset_num = int(trainset_size_org / trainset_size)
         trainset.train_data = np.repeat(trainset.train_data, duplicate_trainset_num, axis=0)
         trainset.train_labels = np.repeat(trainset.train_labels, duplicate_trainset_num, axis=0)
 
