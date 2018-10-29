@@ -148,7 +148,8 @@ def set_bn_eval(model):
         model.eval()
 
 
-def execute_nml_training(train_params, dataloaders_input, idx, model_base_input, logger):
+def execute_nml_training(train_params, dataloaders_input, sample_test_data, sample_test_true_label, idx,
+                         model_base_input, logger):
     # Check train_params contains all required keys
     required_keys = ['lr', 'momentum', 'step_size', 'gamma', 'weight_decay', 'epochs']
     for key in required_keys:
@@ -156,14 +157,16 @@ def execute_nml_training(train_params, dataloaders_input, idx, model_base_input,
             logger.logger.error('The key: %s is not in train_params' % key)
             raise ValueError('The key: %s is not in train_params' % key)
 
-    # Extract sample from dataloader
-    sample_test_data = dataloaders_input['test'].dataset.test_data[idx]
-    sample_test_true_label = dataloaders_input['test'].dataset.test_labels[idx]
+    # # Extract sample from dataloader
+    # sample_test_data = dataloaders_input['test'].dataset.test_data[idx]
+    # sample_test_true_label = dataloaders_input['test'].dataset.test_labels[idx]
     classes_trained = dataloaders_input['classes']
     if 'classes_cifar100' in dataloaders_input:
         classes_true = dataloaders_input['classes_cifar100']
     elif 'classes_svhn' in dataloaders_input:
-        classes_true = dataloaders_input['svhn']
+        classes_true = dataloaders_input['classes_svhn']
+    elif 'classes_noise' in dataloaders_input:
+        classes_true = dataloaders_input['classes_noise']
     else:
         classes_true = classes_trained
 

@@ -35,6 +35,7 @@ def insert_sample_to_dataset(trainloader, sample_to_insert_data, sample_to_inser
 
 
 def create_svhn_dataloaders(data_dir, batch_size, num_workers):
+    # todo: need to resize to 32x32x3
     trainset = datasets.SVHN(root=data_dir,
                              split='train',
                              download=True,

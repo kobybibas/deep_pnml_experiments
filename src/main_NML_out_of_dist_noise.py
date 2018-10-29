@@ -26,7 +26,8 @@ with open(os.path.join(logger.output_folder, 'params.json'), 'w', encoding='utf8
 # Load base model and datasets
 data_folder = './data'
 trainloader, testloader, classes = create_cifar10_dataloaders(data_folder, params['batch_size'], params['num_workers'])
-dataloaders = {'train': trainloader, 'test': testloader, 'classes': classes}
+classes_noise = ('Noise',) * 10
+dataloaders = {'train': trainloader, 'test': testloader, 'classes': classes, 'classes_noise': classes_noise}
 
 ################
 # Run basic training
@@ -61,7 +62,8 @@ for idx in range(params_fit_to_sample['test_start_idx'], params_fit_to_sample['t
     logger.add_org_prob_to_results_dict(idx, prob_org, sample_test_true_label)
 
     # NML training- train the model with test sample
-    execute_nml_training(params_fit_to_sample, dataloaders, idx, model_base, logger)
+    execute_nml_training(params_fit_to_sample, dataloaders, sample_test_data, sample_test_true_label, idx,
+                         model_base, logger)
 
     # Log and save
     logger.save_json_file()

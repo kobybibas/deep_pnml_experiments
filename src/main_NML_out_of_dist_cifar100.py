@@ -67,7 +67,8 @@ for idx in range(params_fit_to_sample['test_start_idx'], params_fit_to_sample['t
 
     # NML training- train the model with test sample
     model = load_pretrained_resnet20_cifar10_model(resnet20())
-    execute_nml_training(params_fit_to_sample, dataloaders, idx, model, logger)
+    execute_nml_training(params_fit_to_sample, dataloaders, sample_test_data, sample_test_true_label, idx,
+                         model, logger)
 
     # Log and save
     logger.save_json_file()
