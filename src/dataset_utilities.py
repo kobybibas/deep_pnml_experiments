@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import copy
+import os
 
 import numpy as np
 from torch.utils import data
@@ -35,7 +36,7 @@ def insert_sample_to_dataset(trainloader, sample_to_insert_data, sample_to_inser
 
 
 def create_svhn_dataloaders(data_dir, batch_size, num_workers):
-    # todo: need to resize to 32x32x3
+    data_dir = os.path.join(data_dir, 'svhn')
     trainset = datasets.SVHN(root=data_dir,
                              split='train',
                              download=True,
