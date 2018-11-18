@@ -39,7 +39,7 @@ def execute_normalize_prob(prob_list):
     # Normalize the probabilities to be valid distribution
     # Return list of probabilities along with the normalization factor which was used.
     normalization_factor = np.sum(prob_list)
-    normalized_prob = np.array(prob_list) / (normalization_factor)  # + np.finfo(float).eps)
+    normalized_prob = np.array(prob_list) / normalization_factor
     return normalized_prob, normalization_factor
 
 
@@ -48,34 +48,34 @@ def compute_log_loss(normalized_prob, true_label):
     return -np.log10(normalized_prob[true_label] + np.finfo(float).eps)
 
 
-def get_ERM_log_loss_from_dict(results_dict, is_random_labels=False):
-    if is_random_labels == True:
+def get_erm_log_loss_from_dict(results_dict, is_random_labels=False):
+    if is_random_labels is True:
         _, testloader, _ = create_cifar10_dataloaders('../data/', 1, 1)
 
-    loss_ERM_list = []
-    is_correct_ERM_list = []
+    loss_erm_list = []
+    is_correct_erm_list = []
     for keys in results_dict:
         sample_dict = results_dict[keys]
         _, true_label, _, prob_org = extract_probabilities_list(sample_dict)
 
         # If was trained with random- extract the real label
-        if is_random_labels == True:
+        if is_random_labels is True:
             true_label = testloader.dataset.test_labels[int(keys)]
 
-        loss_ERM = compute_log_loss(prob_org, true_label)
-        loss_ERM_list.append(loss_ERM)
-        is_correct_ERM_list.append(np.argmax(prob_org) == true_label)
+        loss_erm = compute_log_loss(prob_org, true_label)
+        loss_erm_list.append(loss_erm)
+        is_correct_erm_list.append(np.argmax(prob_org) == true_label)
 
-    acc_ERM = np.sum(is_correct_ERM_list) / len(is_correct_ERM_list)
-    return loss_ERM_list, acc_ERM, is_correct_ERM_list
+    acc_erm = np.sum(is_correct_erm_list) / len(is_correct_erm_list)
+    return loss_erm_list, acc_erm, is_correct_erm_list
 
 
-def get_NML_log_loss_from_dict(results_dict, is_random_labels=False):
-    if is_random_labels == True:
+def get_nml_log_loss_from_dict(results_dict, is_random_labels=False):
+    if is_random_labels is True:
         _, testloader, _ = create_cifar10_dataloaders('../data/', 1, 1)
 
-    loss_NML_list = []
-    is_correct_list_NML_list = []
+    loss_nml_list = []
+    is_correct_list_nml_list = []
     normalization_factor_list = []
     test_sample_idx_list = []
     for keys in results_dict:
@@ -84,18 +84,18 @@ def get_NML_log_loss_from_dict(results_dict, is_random_labels=False):
         normalized_prob, normalization_factor = execute_normalize_prob(prob)
 
         # If was trained with random - extract the real label
-        if is_random_labels == True:
+        if is_random_labels is True:
             true_label = testloader.dataset.test_labels[int(keys)]
 
         # Protection against out of distribution
         if true_label in range(0, len(normalized_prob)):
-            loss_NML = compute_log_loss(normalized_prob, true_label)
-            loss_NML_list.append(loss_NML)
+            loss_nml = compute_log_loss(normalized_prob, true_label)
+            loss_nml_list.append(loss_nml)
         normalization_factor_list.append(normalization_factor)
-        is_correct_list_NML_list.append(predicted_label == true_label)
+        is_correct_list_nml_list.append(predicted_label == true_label)
         test_sample_idx_list.append(keys)
-    acc_NML = np.sum(is_correct_list_NML_list) / len(is_correct_list_NML_list)
-    return loss_NML_list, normalization_factor_list, acc_NML, is_correct_list_NML_list, test_sample_idx_list
+    acc_nml = np.sum(is_correct_list_nml_list) / len(is_correct_list_nml_list)
+    return loss_nml_list, normalization_factor_list, acc_nml, is_correct_list_nml_list, test_sample_idx_list
 
 
 def extract_probabilities_form_train_loss_list(evaluation_dict, trainset_size=50000):
@@ -117,8 +117,8 @@ def extract_probabilities_form_train_loss_list(evaluation_dict, trainset_size=50
     return prob_all, true_label, predicted_label, prob_org
 
 
-def get_NML_log_loss_of_the_series_from_dict(results_dict, trainset_size=50000):
-    loss_NML_list = []
+def get_nml_log_loss_of_the_series_from_dict(results_dict, trainset_size=50000):
+    loss_nml_list = []
     is_correct_list = []
     normalization_factor_list = []
     test_sample_idx_list = []
@@ -130,13 +130,13 @@ def get_NML_log_loss_of_the_series_from_dict(results_dict, trainset_size=50000):
 
         # Protection against out of distribution
         if true_label in range(0, len(normalized_prob)):
-            loss_NML = compute_log_loss(normalized_prob, true_label)
-            loss_NML_list.append(loss_NML)
+            loss_nml = compute_log_loss(normalized_prob, true_label)
+            loss_nml_list.append(loss_nml)
         normalization_factor_list.append(normalization_factor)
         is_correct_list.append(predicted_label == true_label)
         test_sample_idx_list.append(keys)
-    acc_NML = np.sum(is_correct_list) / len(is_correct_list)
-    return loss_NML_list, normalization_factor_list, acc_NML, is_correct_list, test_sample_idx_list
+    acc_nml = np.sum(is_correct_list) / len(is_correct_list)
+    return loss_nml_list, normalization_factor_list, acc_nml, is_correct_list, test_sample_idx_list
 
 
 def calculate_top_k_acc(results_dict, top_k, prob_thresh=0.0):
@@ -168,7 +168,7 @@ def calculate_top_k_acc(results_dict, top_k, prob_thresh=0.0):
 
 
 def get_jinni_log_loss_from_dict(results_dict, is_random_labels=False):
-    if is_random_labels == True:
+    if is_random_labels is True:
         _, testloader, _ = create_cifar10_dataloaders('../data/', 1, 1)
 
     loss_jinni_list = []
@@ -177,7 +177,7 @@ def get_jinni_log_loss_from_dict(results_dict, is_random_labels=False):
         sample_dict = results_dict[keys]
 
         # If was trained with random- extract the real label
-        if is_random_labels == True:
+        if is_random_labels is True:
             true_label = testloader.dataset.test_labels[int(keys)]
             sample_dict['true_label'] = true_label
         prob_jinni, true_label, predicted_jinni_label = extract_jinni_probabilities_list(sample_dict)
@@ -220,9 +220,9 @@ def load_dict_from_file_list(files):
 def load_results_to_df(files):
     results_dict = load_dict_from_file_list(files)
 
-    log_nml_list, normalization_factor, acc, is_correct_nml_list, test_sample_idx = get_NML_log_loss_from_dict(
+    log_nml_list, normalization_factor, acc, is_correct_nml_list, test_sample_idx = get_nml_log_loss_from_dict(
         results_dict)
-    loss_erm_list, acc_erm, is_correct_erm_list = get_ERM_log_loss_from_dict(results_dict)
+    loss_erm_list, acc_erm, is_correct_erm_list = get_erm_log_loss_from_dict(results_dict)
     loss_jinni_list, acc_jinni, is_correct_jinni_list = get_jinni_log_loss_from_dict(results_dict)
 
     test_sample_idx = np.array(test_sample_idx).astype(int)
@@ -247,9 +247,9 @@ def calc_statistic_from_df(result_df):
 
     # calc acc
     count = result_df.shape[0]
-    acc_jinni = result_df['jinni_is_correct'][result_df['jinni_is_correct'] == True].count() / count
-    acc_erm = result_df['erm_is_correct'][result_df['erm_is_correct'] == True].count() / count
-    acc_nml = result_df['nml_is_correct'][result_df['nml_is_correct'] == True].count() / count
+    acc_jinni = result_df['jinni_is_correct'][result_df['jinni_is_correct'] is True].count() / count
+    acc_erm = result_df['erm_is_correct'][result_df['erm_is_correct'] is True].count() / count
+    acc_nml = result_df['nml_is_correct'][result_df['nml_is_correct'] is True].count() / count
 
     stat = {'jinni': pd.Series([acc_jinni, mean_loss_jinni, std_loss_jinni], index=['acc', 'mean loss', 'std loss']),
             'nml': pd.Series([acc_nml, mean_loss_nml, std_loss_nml], index=['acc', 'mean loss', 'std loss']),
@@ -259,11 +259,20 @@ def calc_statistic_from_df(result_df):
     return statistics_df
 
 
+def result_dict_to_nml_df(results_dict):
+    nml_df = pd.DataFrame(columns=[str(x) for x in range(10)] + ['true_label', 'regret'])
+
+    for keys in results_dict:
+        sample_dict = results_dict[keys]
+        prob_all, true_label, predicted_label, prob_org = extract_probabilities_list(sample_dict)
+        prob_nml, norm_factor = execute_normalize_prob(prob_all)
+        nml_df.loc[keys] = prob_nml.tolist() + [true_label, norm_factor]
+    return nml_df
+
+
 if __name__ == "__main__":
     # Example
-    json_file_name = os.path.join('output', 'NML_results_20180815_135021', 'results_NML_20180815_135021.json')
+    json_file_name = os.path.join('.', 'results_example.json')
     with open(json_file_name) as data_file:
         results_dict = json.load(data_file)
-    # loss_jinni_list, acc = get_jinni_log_loss_from_dict(results_dict)
-    loss_NML_list, normalization_factor_list, acc_NML, is_correct_list_NML_list, test_sample_idx_list = \
-        get_NML_log_loss_of_the_series_from_dict(results_dict)
+    result_dict_to_nml_df(results_dict)
