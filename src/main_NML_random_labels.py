@@ -11,6 +11,7 @@ from logger_utilities import Logger
 from train_utilities import TrainClass, eval_single_sample
 from train_utilities import execute_nml_training
 from wide_resnet import WideResNet
+from train_utilities import freeze_resnet_layers
 
 """
 Example of running:
@@ -62,6 +63,11 @@ else:
     logger.info('Load pretrained model')
     model_base.load_state_dict(torch.load(params_initial_training['pretrained_model_path']))
     model_base = model_base.cuda() if torch.cuda.is_available() else model_base
+
+################
+# Freeze layers
+logger.info('Freeze layer: %d' % params['freeze_layer'])
+model_base = freeze_resnet_layers(model_base, params['freeze_layer'], logger)
 
 ############################
 # Iterate over test dataset

@@ -18,6 +18,7 @@
         "batch_size": 128,
         "num_workers": 4,
         "label_corrupt_prob": 1.0,
+        "freeze_layer": 4,
         "initial_training": {
             "do_initial_training": true,
             "pretrained_model_path": "",
