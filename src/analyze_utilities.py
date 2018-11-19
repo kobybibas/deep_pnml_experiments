@@ -119,38 +119,31 @@ def calc_statistic_from_df_single(result_df):
     return statistics_df
 
 
-# def calc_statistic_from_df(result_df):
-#     # calc mean and std
-#     mean_loss_jinni, std_loss_jinni = result_df['jinni_loss'].mean(), result_df['jinni_loss'].std()
-#     mean_loss_nml, std_loss_nml = result_df['nml_loss'].mean(), result_df['nml_loss'].std()
-#     mean_loss_erm, std_loss_erm = result_df['erm_loss'].mean(), result_df['erm_loss'].std()
-#
-#     # calc acc
-#     count = result_df.shape[0]
-#     acc_jinni = result_df['jinni_is_correct'][result_df['jinni_is_correct'] == np.array(True)].count() / count
-#     acc_erm = result_df['erm_is_correct'][result_df['erm_is_correct'] == np.array(True)].count() / count
-#     acc_nml = result_df['nml_is_correct'][result_df['nml_is_correct'] == np.array(True)].count() / count
-#
-#     stat = {'jinni': pd.Series([acc_jinni, mean_loss_jinni, std_loss_jinni], index=['acc', 'mean loss', 'std loss']),
-#             'nml': pd.Series([acc_nml, mean_loss_nml, std_loss_nml], index=['acc', 'mean loss', 'std loss']),
-#             'erm': pd.Series([acc_erm, mean_loss_erm, std_loss_erm], index=['acc', 'mean loss', 'std loss'])}
-#     statistics_df = pd.DataFrame(stat)
-#
-#     return statistics_df
-
-
 def result_dict_to_nml_df(results_dict, is_random_labels=False):
-    nml_df = pd.DataFrame(columns=[str(x) for x in range(10)] + ['true_label', 'loss', 'log10_norm_factor'])
+    # Initialize col of df
+    df_col = [str(x) for x in range(10)] + ['true_label', 'loss', 'log10_norm_factor']
+    nml_dict = {}
+    for col in df_col:
+        nml_dict[col] = []
+    loc = []
 
+    # Iterate on test samples
     for keys in results_dict:
         sample_dict = results_dict[keys]
         prob_all, true_label, predicted_label, _ = extract_probabilities_list(sample_dict)
         prob_nml, norm_factor = execute_normalize_prob(prob_all)
         true_label = true_label if is_random_labels is False else testloader.dataset.test_labels[int(keys)]
+        nml_dict['true_label'].append(true_label)
+        nml_dict['loss'].append(compute_log_loss(prob_nml, true_label))
+        for prob_label, prob_single in enumerate(prob_nml):
+            nml_dict[str(prob_label)].append(prob_single)
+        nml_dict['log10_norm_factor'].append(np.log10(norm_factor))
+        loc.append(int(keys))
 
-        loss = compute_log_loss(prob_nml, true_label)
-        nml_df.loc[int(keys)] = list(prob_nml) + [true_label, loss, np.log10(norm_factor)]
+    # Create df
+    nml_df = pd.DataFrame(nml_dict, index=loc)
 
+    # Add more columns
     is_correct = np.array(nml_df[[str(x) for x in range(10)]].idxmax(axis=1)).astype(int) == np.array(
         nml_df['true_label']).astype(int)
     nml_df['is_correct'] = is_correct
@@ -158,7 +151,12 @@ def result_dict_to_nml_df(results_dict, is_random_labels=False):
 
 
 def result_dict_to_erm_df(results_dict, is_random_labels=False):
-    erm_df = pd.DataFrame(columns=[str(x) for x in range(10)] + ['true_label', 'loss'])
+    # Initialize columns to df
+    df_col = [str(x) for x in range(10)] + ['true_label', 'loss']
+    erm_dict = {}
+    for col in df_col:
+        erm_dict[col] = []
+    loc = []
 
     # Iterate on keys
     for keys in results_dict:
@@ -166,10 +164,16 @@ def result_dict_to_erm_df(results_dict, is_random_labels=False):
         sample_dict = results_dict[keys]
         _, true_label, _, prob_org = extract_probabilities_list(sample_dict)
         true_label = true_label if is_random_labels is False else testloader.dataset.test_labels[int(keys)]
-        loss = compute_log_loss(prob_org, true_label)
+        erm_dict['true_label'].append(true_label)
+        erm_dict['loss'].append(compute_log_loss(prob_org, true_label))
+        for prob_label, prob_single in enumerate(prob_org):
+            erm_dict[str(prob_label)].append(prob_single)
+        loc.append(int(keys))
 
-        # add to dataframe
-        erm_df.loc[int(keys)] = list(prob_org) + [true_label, loss]
+    # Create df
+    erm_df = pd.DataFrame(erm_dict, index=loc)
+
+    # Add more columns
     is_correct = np.array(erm_df[[str(x) for x in range(10)]].idxmax(axis=1)).astype(int) == np.array(
         erm_df['true_label']).astype(int)
     erm_df['is_correct'] = is_correct
@@ -177,7 +181,12 @@ def result_dict_to_erm_df(results_dict, is_random_labels=False):
 
 
 def result_dict_to_jinni_df(results_dict, is_random_labels=False):
-    jinni_df = pd.DataFrame(columns=[str(x) for x in range(10)] + ['true_label', 'loss'])
+    # Initialize columns to df
+    df_col = [str(x) for x in range(10)] + ['true_label', 'loss']
+    jinni_dict = {}
+    for col in df_col:
+        jinni_dict[col] = []
+    loc = []
 
     # Iterate on keys
     for keys in results_dict:
@@ -185,10 +194,14 @@ def result_dict_to_jinni_df(results_dict, is_random_labels=False):
         sample_dict = results_dict[keys]
         prob_jinni, true_label, predicted_jinni_label = extract_jinni_probabilities_list(sample_dict)
         true_label = true_label if is_random_labels is False else testloader.dataset.test_labels[int(keys)]
-        loss = compute_log_loss(prob_jinni, true_label)
+        jinni_dict['true_label'].append(true_label)
+        jinni_dict['loss'].append(compute_log_loss(prob_jinni, true_label))
+        for prob_label, prob_single in enumerate(prob_jinni):
+            jinni_dict[str(prob_label)].append(prob_single)
+        loc.append(int(keys))
 
-        # add to dataframe
-        jinni_df.loc[int(keys)] = list(prob_jinni) + [true_label, loss]
+    # Create df
+    jinni_df = pd.DataFrame(jinni_dict, index=loc)
 
     # Add more columns
     is_correct = np.array(jinni_df[[str(x) for x in range(10)]].idxmax(axis=1)).astype(int) == np.array(
@@ -207,11 +220,11 @@ if __name__ == "__main__":
 
     tic = time.time()
     result_df_sample, statistics_df_sample = load_results_to_df([json_file_name])
-    print('load_results_to_df: {0:.2f} [s]'.format(time.time() - tic))
+    # print('load_results_to_df: {0:.2f} [s]'.format(time.time() - tic))
     tic = time.time()
-    # statistics_df_sample = calc_statistic_from_df(result_df_sample)
-    print('statistics_df: {0:.2f} [s]'.format(time.time() - tic))
-
     nml_df = result_dict_to_nml_df(results_dict_sample)
+    print('result_dict_to_nml_df: {0:.2f} [s]'.format(time.time() - tic))
+    tic = time.time()
     statisic = calc_statistic_from_df_single(nml_df)
+    print('calc_statistic_from_df_single: {0:.2f} [s]'.format(time.time() - tic))
     a = 1
