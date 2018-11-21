@@ -4,6 +4,7 @@ import copy
 import os
 
 import numpy as np
+import torch
 from torch.utils import data
 from torchvision import transforms, datasets
 
@@ -15,17 +16,21 @@ def insert_sample_to_dataset(trainloader, sample_to_insert_data, sample_to_inser
     sample_to_insert_label_expended = np.expand_dims(sample_to_insert_label, 0)
     sample_to_insert_data_expended = np.expand_dims(sample_to_insert_data, 0)
 
-    # Insert sample to train dataset
+    if isinstance(trainloader.dataset.train_data, torch.Tensor):
+        sample_to_insert_data_expended = torch.Tensor(sample_to_insert_data_expended)
+
+    # # Insert sample to train dataset
     dataset_train_with_sample = copy.deepcopy(trainloader.dataset)
     dataset_train_with_sample.train_data = np.concatenate((trainloader.dataset.train_data,
                                                            sample_to_insert_data_expended))
     dataset_train_with_sample.train_labels = np.concatenate((trainloader.dataset.train_labels,
                                                              sample_to_insert_label_expended))
 
-    # # Insert sample to train dataset - make it the only sample for DEBUG
-    # dataset_train_with_sample = copy.deepcopy(trainloader.dataset)
-    # dataset_train_with_sample.train_data = sample_to_insert_data_expended
-    # dataset_train_with_sample.train_labels = sample_to_insert_label_expended
+    if isinstance(trainloader.dataset.train_data, torch.Tensor) and \
+            not isinstance(dataset_train_with_sample.train_data, torch.Tensor):
+        dataset_train_with_sample.train_data = \
+            torch.tensor(dataset_train_with_sample.train_data,
+                         dtype=trainloader.dataset.train_data.dtype)
 
     # Create new dataloader
     trainloader_with_sample = data.DataLoader(dataset_train_with_sample,
@@ -229,5 +234,32 @@ def create_cifar10_dataloaders_with_training_subset(data_dir, batch_size, num_wo
                                  shuffle=False,
                                  num_workers=num_workers)
     classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+
+    return trainloader, testloader, classes
+
+
+def create_mnist_dataloaders(data_dir, batch_size, num_workers):
+    normalize_mist = transforms.Normalize(mean=[0.1307],
+                                          std=[0.3081])
+    trainset = datasets.MNIST(root=data_dir,
+                              train=True,
+                              download=True,
+                              transform=transforms.Compose([transforms.ToTensor(),
+                                                            normalize_mist]))
+    trainloader = data.DataLoader(trainset,
+                                  batch_size=batch_size,
+                                  shuffle=False,
+                                  num_workers=num_workers)
+
+    testset = datasets.MNIST(root=data_dir,
+                             train=False,
+                             download=True,
+                             transform=transforms.Compose([transforms.ToTensor(),
+                                                           normalize_mist]))
+    testloader = data.DataLoader(testset,
+                                 batch_size=batch_size,
+                                 shuffle=False,
+                                 num_workers=num_workers)
+    classes = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
 
     return trainloader, testloader, classes

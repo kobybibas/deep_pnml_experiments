@@ -157,9 +157,6 @@ def execute_nml_training(train_params, dataloaders_input, sample_test_data, samp
             logger.logger.error('The key: %s is not in train_params' % key)
             raise ValueError('The key: %s is not in train_params' % key)
 
-    # # Extract sample from dataloader
-    # sample_test_data = dataloaders_input['test'].dataset.test_data[idx]
-    # sample_test_true_label = dataloaders_input['test'].dataset.test_labels[idx]
     classes_trained = dataloaders_input['classes']
     if 'classes_cifar100' in dataloaders_input:
         classes_true = dataloaders_input['classes_cifar100']
@@ -193,7 +190,15 @@ def execute_nml_training(train_params, dataloaders_input, sample_test_data, samp
         time_trained_label = time.time() - time_trained_label_start
 
         # Evaluate trained model
-        prob, pred = eval_single_sample(model, dataloaders['test'].dataset.transform(sample_test_data))
+        if sample_test_data.shape == (28, 28):
+            # Mnist case
+            sample_test_data_trans = dataloaders['test'].dataset.transform(sample_test_data.
+                                                                           unsqueeze(2).
+                                                                           numpy())
+        else:
+            # CIFA10, NOISE, SVHN, CIFAR100 case
+            sample_test_data_trans = dataloaders['test'].dataset.transform(sample_test_data)
+        prob, pred = eval_single_sample(model, sample_test_data_trans)
 
         # Save to file
         logger.add_entry_to_results_dict(idx, str(trained_label), prob, train_loss, test_loss)
@@ -206,6 +211,7 @@ def execute_nml_training(train_params, dataloaders_input, sample_test_data, samp
 
 
 def freeze_resnet_layers(model, max_freeze_layer, logger):
+    # todo: currently max_freeze_layer 0 and 1 are the same. move ct+=1 to the end
     ct = 0
     for child in model.children():
         ct += 1

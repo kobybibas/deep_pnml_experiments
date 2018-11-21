@@ -67,4 +67,4 @@ class Logger:
 
         self.results_dict[str(test_idx_sample)]['original'] = {}
         self.results_dict[str(test_idx_sample)]['original']['prob'] = prob_org
-        self.results_dict[str(test_idx_sample)]['true_label'] = true_label
+        self.results_dict[str(test_idx_sample)]['true_label'] = int(true_label)
