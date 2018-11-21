@@ -221,6 +221,64 @@ def result_dict_to_jinni_df(results_dict, is_random_labels=False):
     return jinni_df
 
 
+def get_testset_intersections_from_results_dfs(results_df_list: list):
+    if not results_df_list:
+        print('Got empty list!')
+        return [], None
+
+    idx_common = set(results_df_list[0].index.values)
+    for df_idx in range(1, len(results_df_list)):
+        idx_common = idx_common & set(results_df_list[df_idx].index.values)
+
+    for df_idx in range(len(results_df_list)):
+        results_df_list[df_idx] = results_df_list[df_idx].loc[idx_common].sort_index()
+    return results_df_list, idx_common
+
+
+def create_twice_univ_df(results_df_list: list):
+    if not results_df_list:
+        print('Got empty list!')
+        return [], None
+
+    results_df_list, idx_common = get_testset_intersections_from_results_dfs(results_df_list)
+
+    # Twice Dataframe creation . Take the maximum for each label
+    twice_df = pd.DataFrame(columns=[str(x) for x in range(10)])
+    for label in range(10):
+
+        # Extract label ptob from each df
+        prob_from_dfs = []
+        for df in results_df_list:
+            prob_from_dfs.append(df[str(label)])
+
+        # Assign the maximum to twice df
+        twice_df[str(label)] = np.asarray(prob_from_dfs).max(axis=0).tolist()
+
+    # Normalize the prob
+    normalization_factor = twice_df.sum(axis=1)
+    twice_df = twice_df.divide(normalization_factor, axis='index')
+    twice_df['log10_norm_factor'] = normalization_factor
+
+    # Add true label column
+    twice_df['true_label'] = results_df_list[0]['true_label']
+
+    # assign is_correct columns
+    is_correct = np.array(twice_df[[str(x) for x in range(10)]].idxmax(axis=1)).astype(int) == np.array(
+        twice_df['true_label']).astype(int)
+    twice_df['is_correct'] = is_correct
+
+    # assign loss and entropy
+    loss = []
+    entropy_list = []
+    for index, row in twice_df.iterrows():
+        loss.append(-np.log10(row[str(int(row['true_label']))]))
+        entropy_list.append(entropy(np.array(row[[str(x) for x in range(10)]]).astype(float)))
+    twice_df['loss'] = loss
+    twice_df['entropy'] = entropy_list
+
+    return twice_df, idx_common
+
+
 if __name__ == "__main__":
     # Example
     json_file_name = os.path.join('.', 'results_example.json')
@@ -237,4 +295,6 @@ if __name__ == "__main__":
     tic = time.time()
     statisic = calc_statistic_from_df_single(nml_df)
     print('calc_statistic_from_df_single: {0:.2f} [s]'.format(time.time() - tic))
-    a = 1
+
+    a, b = create_twice_univ_df([nml_df, nml_df])
+    print('Done!')
