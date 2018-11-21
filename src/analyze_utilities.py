@@ -4,6 +4,7 @@ import time
 
 import numpy as np
 import pandas as pd
+from scipy.stats import entropy
 
 from dataset_utilities import create_cifar10_dataloaders
 
@@ -88,22 +89,26 @@ def load_dict_from_file_list(files):
     return result_dict
 
 
-def load_results_to_df(files, is_random_labels=False):
+def load_results_to_df(files, is_random_labels=False, w_jinni=True):
     results_dict = load_dict_from_file_list(files)
 
+    # NML
     nml_df = result_dict_to_nml_df(results_dict, is_random_labels=is_random_labels)
-    erm_df = result_dict_to_erm_df(results_dict, is_random_labels=is_random_labels)
-    jinni_df = result_dict_to_jinni_df(results_dict, is_random_labels=is_random_labels)
-
     statisic_nml_df = calc_statistic_from_df_single(nml_df).rename(columns={'statistics': 'nml'})
-    statisic_erm_df = calc_statistic_from_df_single(erm_df).rename(columns={'statistics': 'erm'})
-    statisic_jinni_df = calc_statistic_from_df_single(jinni_df).rename(columns={'jinni': 'erm'})
-
-    # Add prefix before merge
     nml_df = nml_df.add_prefix('nml_')
     nml_df = nml_df.rename(columns={'nml_log10_norm_factor': 'log10_norm_factor'})
+
+    # ERM
+    erm_df = result_dict_to_erm_df(results_dict, is_random_labels=is_random_labels)
+    statisic_erm_df = calc_statistic_from_df_single(erm_df).rename(columns={'statistics': 'erm'})
     erm_df = erm_df.add_prefix('erm_')
-    jinni_df = jinni_df.add_prefix('jinni_')
+
+    # Jinno
+    jinni_df, statisic_jinni_df = None, None
+    if w_jinni:
+        jinni_df = result_dict_to_jinni_df(results_dict, is_random_labels=is_random_labels)
+        statisic_jinni_df = calc_statistic_from_df_single(jinni_df).rename(columns={'statistics': 'jinni'})
+        jinni_df = jinni_df.add_prefix('jinni_')
 
     # Merge and return
     result_df = pd.concat([nml_df, erm_df, jinni_df], axis=1)
@@ -113,15 +118,17 @@ def load_results_to_df(files, is_random_labels=False):
 
 def calc_statistic_from_df_single(result_df):
     mean_loss, std_loss = result_df['loss'].mean(), result_df['loss'].std()
-    acc_jinni = result_df['is_correct'].sum() / result_df.shape[0]
+    acc = result_df['is_correct'].sum() / result_df.shape[0]
+    mean_entropy = np.mean(result_df['entropy'])
     statistics_df = pd.DataFrame(
-        {'statistics': pd.Series([acc_jinni, mean_loss, std_loss], index=['acc', 'mean loss', 'std loss'])})
+        {'statistics': pd.Series([acc, mean_loss, std_loss, mean_entropy],
+                                 index=['acc', 'mean loss', 'std loss', 'mean entropy'])})
     return statistics_df
 
 
 def result_dict_to_nml_df(results_dict, is_random_labels=False):
     # Initialize col of df
-    df_col = [str(x) for x in range(10)] + ['true_label', 'loss', 'log10_norm_factor']
+    df_col = [str(x) for x in range(10)] + ['true_label', 'loss', 'log10_norm_factor', 'entropy']
     nml_dict = {}
     for col in df_col:
         nml_dict[col] = []
@@ -139,6 +146,7 @@ def result_dict_to_nml_df(results_dict, is_random_labels=False):
             nml_dict[str(prob_label)].append(prob_single)
         nml_dict['log10_norm_factor'].append(np.log10(norm_factor))
         loc.append(int(keys))
+        nml_dict['entropy'].append(entropy(prob_nml, base=10))
 
     # Create df
     nml_df = pd.DataFrame(nml_dict, index=loc)
@@ -152,7 +160,7 @@ def result_dict_to_nml_df(results_dict, is_random_labels=False):
 
 def result_dict_to_erm_df(results_dict, is_random_labels=False):
     # Initialize columns to df
-    df_col = [str(x) for x in range(10)] + ['true_label', 'loss']
+    df_col = [str(x) for x in range(10)] + ['true_label', 'loss', 'entropy']
     erm_dict = {}
     for col in df_col:
         erm_dict[col] = []
@@ -168,6 +176,7 @@ def result_dict_to_erm_df(results_dict, is_random_labels=False):
         erm_dict['loss'].append(compute_log_loss(prob_org, true_label))
         for prob_label, prob_single in enumerate(prob_org):
             erm_dict[str(prob_label)].append(prob_single)
+        erm_dict['entropy'].append(entropy(prob_org, base=10))
         loc.append(int(keys))
 
     # Create df
@@ -182,7 +191,7 @@ def result_dict_to_erm_df(results_dict, is_random_labels=False):
 
 def result_dict_to_jinni_df(results_dict, is_random_labels=False):
     # Initialize columns to df
-    df_col = [str(x) for x in range(10)] + ['true_label', 'loss']
+    df_col = [str(x) for x in range(10)] + ['true_label', 'loss', 'entropy']
     jinni_dict = {}
     for col in df_col:
         jinni_dict[col] = []
@@ -198,6 +207,7 @@ def result_dict_to_jinni_df(results_dict, is_random_labels=False):
         jinni_dict['loss'].append(compute_log_loss(prob_jinni, true_label))
         for prob_label, prob_single in enumerate(prob_jinni):
             jinni_dict[str(prob_label)].append(prob_single)
+        jinni_dict['entropy'].append(entropy(prob_jinni, base=10))
         loc.append(int(keys))
 
     # Create df

@@ -2,29 +2,27 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class Net(nn.Module):
+class LeNet(nn.Module):
     def __init__(self):
-        super(Net, self).__init__()
-        self.conv1 = nn.Conv2d(3, 6, 5)
-        self.conv2 = nn.Conv2d(6, 16, 5)
+        super(LeNet, self).__init__()
+        self.conv1 = nn.Conv2d(1, 6, (5, 5), padding=2)
+        self.conv2 = nn.Conv2d(6, 16, (5, 5))
         self.fc1 = nn.Linear(16 * 5 * 5, 120)
         self.fc2 = nn.Linear(120, 84)
         self.fc3 = nn.Linear(84, 10)
-        self.conv2_drop = nn.Dropout2d(p=0.1)
 
     def forward(self, x):
-        out = self.conv1(x)
-        out = F.relu(out)
-        out = F.max_pool2d(out, 2)
-        out = self.conv2(out)
-        out = self.conv2_drop(out)
-        out = F.relu(out)
-        out = F.max_pool2d(out, 2)
-        out = out.view(out.size(0), -1)
-        out = self.fc1(out)
-        out = F.relu(out)
-        out = self.fc2(out)
-        out = F.relu(out)
-        out = F.dropout(out, p=0.1, training=self.training)
-        out = self.fc3(out)
-        return out
+        x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
+        x = F.max_pool2d(F.relu(self.conv2(x)), (2, 2))
+        x = x.view(-1, self.num_flat_features(x))
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+
+    def num_flat_features(self, x):
+        size = x.size()[1:]
+        num_features = 1
+        for s in size:
+            num_features *= s
+        return num_features
