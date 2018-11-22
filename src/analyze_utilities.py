@@ -30,14 +30,14 @@ def extract_probabilities_list(evaluation_dict):
     return np.array(prob_all), true_label, predicted_label, prob_org
 
 
-def extract_jinni_probabilities_list(evaluation_dict):
+def extract_genie_probabilities_list(evaluation_dict):
     # Extract to probabilities of the model which was trained with the true label
     # return list of probabilities
     true_label = evaluation_dict['true_label']
-    prob_jinni = np.array(evaluation_dict[str(true_label)]['prob'])
-    predicted_jinni_label = np.argmax(prob_jinni)
+    prob_genie = np.array(evaluation_dict[str(true_label)]['prob'])
+    predicted_genie_label = np.argmax(prob_genie)
 
-    return prob_jinni, true_label, predicted_jinni_label
+    return prob_genie, true_label, predicted_genie_label
 
 
 def execute_normalize_prob(prob_list):
@@ -89,7 +89,7 @@ def load_dict_from_file_list(files):
     return result_dict
 
 
-def load_results_to_df(files, is_random_labels=False, w_jinni=True):
+def load_results_to_df(files, is_random_labels=False, w_genie=True):
     results_dict = load_dict_from_file_list(files)
 
     # NML
@@ -103,16 +103,16 @@ def load_results_to_df(files, is_random_labels=False, w_jinni=True):
     statisic_erm_df = calc_statistic_from_df_single(erm_df).rename(columns={'statistics': 'erm'})
     erm_df = erm_df.add_prefix('erm_')
 
-    # Jinno
-    jinni_df, statisic_jinni_df = None, None
-    if w_jinni:
-        jinni_df = result_dict_to_jinni_df(results_dict, is_random_labels=is_random_labels)
-        statisic_jinni_df = calc_statistic_from_df_single(jinni_df).rename(columns={'statistics': 'jinni'})
-        jinni_df = jinni_df.add_prefix('jinni_')
+    # genie
+    genie_df, statisic_genie_df = None, None
+    if w_genie:
+        genie_df = result_dict_to_genie_df(results_dict, is_random_labels=is_random_labels)
+        statisic_genie_df = calc_statistic_from_df_single(genie_df).rename(columns={'statistics': 'genie'})
+        genie_df = genie_df.add_prefix('genie_')
 
     # Merge and return
-    result_df = pd.concat([nml_df, erm_df, jinni_df], axis=1)
-    statisic_df = pd.concat([statisic_nml_df, statisic_erm_df, statisic_jinni_df], axis=1)
+    result_df = pd.concat([nml_df, erm_df, genie_df], axis=1)
+    statisic_df = pd.concat([statisic_nml_df, statisic_erm_df, statisic_genie_df], axis=1)
     return result_df, statisic_df
 
 
@@ -189,36 +189,36 @@ def result_dict_to_erm_df(results_dict, is_random_labels=False):
     return erm_df
 
 
-def result_dict_to_jinni_df(results_dict, is_random_labels=False):
+def result_dict_to_genie_df(results_dict, is_random_labels=False):
     # Initialize columns to df
     df_col = [str(x) for x in range(10)] + ['true_label', 'loss', 'entropy']
-    jinni_dict = {}
+    genie_dict = {}
     for col in df_col:
-        jinni_dict[col] = []
+        genie_dict[col] = []
     loc = []
 
     # Iterate on keys
     for keys in results_dict:
         # extract probability of test sample
         sample_dict = results_dict[keys]
-        prob_jinni, true_label, predicted_jinni_label = extract_jinni_probabilities_list(sample_dict)
+        prob_genie, true_label, predicted_genie_label = extract_genie_probabilities_list(sample_dict)
         true_label = true_label if is_random_labels is False else testloader.dataset.test_labels[int(keys)]
-        jinni_dict['true_label'].append(true_label)
-        jinni_dict['loss'].append(compute_log_loss(prob_jinni, true_label))
-        for prob_label, prob_single in enumerate(prob_jinni):
-            jinni_dict[str(prob_label)].append(prob_single)
-        jinni_dict['entropy'].append(entropy(prob_jinni, base=10))
+        genie_dict['true_label'].append(true_label)
+        genie_dict['loss'].append(compute_log_loss(prob_genie, true_label))
+        for prob_label, prob_single in enumerate(prob_genie):
+            genie_dict[str(prob_label)].append(prob_single)
+        genie_dict['entropy'].append(entropy(prob_genie, base=10))
         loc.append(int(keys))
 
     # Create df
-    jinni_df = pd.DataFrame(jinni_dict, index=loc)
+    genie_df = pd.DataFrame(genie_dict, index=loc)
 
     # Add more columns
-    is_correct = np.array(jinni_df[[str(x) for x in range(10)]].idxmax(axis=1)).astype(int) == np.array(
-        jinni_df['true_label']).astype(int)
-    jinni_df['is_correct'] = is_correct
+    is_correct = np.array(genie_df[[str(x) for x in range(10)]].idxmax(axis=1)).astype(int) == np.array(
+        genie_df['true_label']).astype(int)
+    genie_df['is_correct'] = is_correct
 
-    return jinni_df
+    return genie_df
 
 
 def get_testset_intersections_from_results_dfs(results_df_list: list):
@@ -243,10 +243,10 @@ def create_twice_univ_df(results_df_list: list):
     results_df_list, idx_common = get_testset_intersections_from_results_dfs(results_df_list)
 
     # Twice Dataframe creation . Take the maximum for each label
-    twice_df = pd.DataFrame(columns=[str(x) for x in range(10)])
+    twice_df = pd.DataFrame(columns=[str(x) for x in range(10)], index=idx_common)
     for label in range(10):
 
-        # Extract label ptob from each df
+        # Extract label prob from each df
         prob_from_dfs = []
         for df in results_df_list:
             prob_from_dfs.append(df[str(label)])
@@ -260,11 +260,11 @@ def create_twice_univ_df(results_df_list: list):
     twice_df['log10_norm_factor'] = normalization_factor
 
     # Add true label column
-    twice_df['true_label'] = results_df_list[0]['true_label']
+    twice_df['true_label'] = results_df_list[0]['true_label'].astype(int)
 
     # assign is_correct columns
     is_correct = np.array(twice_df[[str(x) for x in range(10)]].idxmax(axis=1)).astype(int) == np.array(
-        twice_df['true_label']).astype(int)
+        twice_df['true_label'])
     twice_df['is_correct'] = is_correct
 
     # assign loss and entropy
