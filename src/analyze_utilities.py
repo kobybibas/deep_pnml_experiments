@@ -89,23 +89,23 @@ def load_dict_from_file_list(files):
     return result_dict
 
 
-def load_results_to_df(files, is_random_labels=False, w_genie=True):
+def load_results_to_df(files, is_random_labels=False, is_out_of_dist=False):
     results_dict = load_dict_from_file_list(files)
 
     # NML
-    nml_df = result_dict_to_nml_df(results_dict, is_random_labels=is_random_labels)
+    nml_df = result_dict_to_nml_df(results_dict, is_random_labels=is_random_labels, is_out_of_dist=is_out_of_dist)
     statisic_nml_df = calc_statistic_from_df_single(nml_df).rename(columns={'statistics': 'nml'})
     nml_df = nml_df.add_prefix('nml_')
     nml_df = nml_df.rename(columns={'nml_log10_norm_factor': 'log10_norm_factor'})
 
     # ERM
-    erm_df = result_dict_to_erm_df(results_dict, is_random_labels=is_random_labels)
+    erm_df = result_dict_to_erm_df(results_dict, is_random_labels=is_random_labels, is_out_of_dist=is_out_of_dist)
     statisic_erm_df = calc_statistic_from_df_single(erm_df).rename(columns={'statistics': 'erm'})
     erm_df = erm_df.add_prefix('erm_')
 
     # genie
     genie_df, statisic_genie_df = None, None
-    if w_genie:
+    if is_out_of_dist is False:
         genie_df = result_dict_to_genie_df(results_dict, is_random_labels=is_random_labels)
         statisic_genie_df = calc_statistic_from_df_single(genie_df).rename(columns={'statistics': 'genie'})
         genie_df = genie_df.add_prefix('genie_')
@@ -126,7 +126,7 @@ def calc_statistic_from_df_single(result_df):
     return statistics_df
 
 
-def result_dict_to_nml_df(results_dict, is_random_labels=False):
+def result_dict_to_nml_df(results_dict, is_random_labels=False, is_out_of_dist=False):
     # Initialize col of df
     df_col = [str(x) for x in range(10)] + ['true_label', 'loss', 'log10_norm_factor', 'entropy']
     nml_dict = {}
@@ -141,7 +141,8 @@ def result_dict_to_nml_df(results_dict, is_random_labels=False):
         prob_nml, norm_factor = execute_normalize_prob(prob_all)
         true_label = true_label if is_random_labels is False else testloader.dataset.test_labels[int(keys)]
         nml_dict['true_label'].append(true_label)
-        nml_dict['loss'].append(compute_log_loss(prob_nml, true_label))
+        nml_dict['loss'].append(compute_log_loss(prob_nml, true_label)) if is_out_of_dist is False else nml_dict[
+            'loss'].append(None)
         for prob_label, prob_single in enumerate(prob_nml):
             nml_dict[str(prob_label)].append(prob_single)
         nml_dict['log10_norm_factor'].append(np.log10(norm_factor))
@@ -158,7 +159,7 @@ def result_dict_to_nml_df(results_dict, is_random_labels=False):
     return nml_df
 
 
-def result_dict_to_erm_df(results_dict, is_random_labels=False):
+def result_dict_to_erm_df(results_dict, is_random_labels=False, is_out_of_dist=False):
     # Initialize columns to df
     df_col = [str(x) for x in range(10)] + ['true_label', 'loss', 'entropy']
     erm_dict = {}
@@ -173,7 +174,8 @@ def result_dict_to_erm_df(results_dict, is_random_labels=False):
         _, true_label, _, prob_org = extract_probabilities_list(sample_dict)
         true_label = true_label if is_random_labels is False else testloader.dataset.test_labels[int(keys)]
         erm_dict['true_label'].append(true_label)
-        erm_dict['loss'].append(compute_log_loss(prob_org, true_label))
+        erm_dict['loss'].append(compute_log_loss(prob_org, true_label)) if is_out_of_dist is False else erm_dict[
+            'loss'].append(None)
         for prob_label, prob_single in enumerate(prob_org):
             erm_dict[str(prob_label)].append(prob_single)
         erm_dict['entropy'].append(entropy(prob_org, base=10))
