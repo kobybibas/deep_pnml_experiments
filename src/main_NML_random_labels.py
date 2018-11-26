@@ -40,7 +40,6 @@ dataloaders = {'train': trainloader, 'test': testloader, 'classes': classes}
 ################
 # Run basic training- so the base model will be in the same conditions as NML model
 params_initial_training = params['initial_training']
-# model_base = resnet20()
 model_base = WideResNet()
 if params_initial_training['do_initial_training'] is True:
     logger.info('Execute basic training')

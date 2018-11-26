@@ -3,6 +3,7 @@ import sys
 import time
 from copy import deepcopy
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 import torch.optim as optim
@@ -41,6 +42,7 @@ class TrainClass:
         test_loss, test_acc = torch.tensor([-1.]), torch.tensor([-1.])
         epoch = 0
         epoch_time = 0
+        lr = 0
 
         # Loop on epochs
         for epoch in range(self.num_epochs):
@@ -53,10 +55,13 @@ class TrainClass:
                 test_loss, test_acc = torch.tensor([-1.]), torch.tensor([-1.])
             epoch_time = time.time() - epoch_start_time
 
-            self.logger.info('[%d/%d] [train test] loss =[%f %f], acc=[%f %f] epoch_time=%f' %
-                             (epoch, self.num_epochs - 1,
-                              train_loss, test_loss, train_acc, test_acc,
-                              epoch_time))
+            for param_group in self.optimizer.param_groups:
+                lr = param_group['lr']
+
+            self.logger.info('[%d/%d] [train test] loss =[%f %f], acc=[%f %f], lr=%f, epoch_time=%.2f'
+                             % (epoch, self.num_epochs - 1,
+                                train_loss, test_loss, train_acc, test_acc,
+                                lr, epoch_time))
 
             # Stop training if desired goal is achieved
             if loss_goal is not None and train_loss < loss_goal:
@@ -64,9 +69,8 @@ class TrainClass:
         test_loss, test_acc = self.test(dataloaders['test'])
 
         # Print and save
-        self.logger.info('[%d/%d] [train test] loss =[%f %f], acc=[%f %f] epoch_time=%f' %
-                         (epoch, self.num_epochs,
-                          train_loss, test_loss, train_acc, test_acc,
+        self.logger.info('----- [train test] loss =[%f %f], acc=[%f %f] epoch_time=%.2f' %
+                         (train_loss, test_loss, train_acc, test_acc,
                           epoch_time))
         train_loss_output = float(train_loss.cpu().detach().numpy().round(16))
         test_loss_output = float(test_loss.cpu().detach().numpy().round(16))
@@ -99,7 +103,7 @@ class TrainClass:
             loss.backward()
             self.optimizer.step()
 
-        self.optimizer.step()
+        self.scheduler.step()
         train_loss /= len(train_loader.dataset)
         train_acc = correct / len(train_loader.dataset)
         return train_loss, train_acc
@@ -178,7 +182,6 @@ def execute_nml_training(train_params, dataloaders_input, sample_test_data, samp
 
         # Train model
         model = deepcopy(model_base_input)
-        model = torch.nn.DataParallel(model) if torch.cuda.device_count() > 1 else model
         train_class = TrainClass(filter(lambda p: p.requires_grad, model.parameters()),
                                  train_params['lr'], train_params['momentum'], train_params['step_size'],
                                  train_params['gamma'], train_params['weight_decay'],
@@ -186,7 +189,6 @@ def execute_nml_training(train_params, dataloaders_input, sample_test_data, samp
         train_class.eval_test_during_train = False
         train_class.freeze_batch_norm = True
         model, train_loss, test_loss = train_class.train_model(model, dataloaders, train_params['epochs'])
-        model = model.module if torch.cuda.device_count() > 1 else model
         time_trained_label = time.time() - time_trained_label_start
 
         # Evaluate trained model
@@ -196,18 +198,19 @@ def execute_nml_training(train_params, dataloaders_input, sample_test_data, samp
                                                                            unsqueeze(2).
                                                                            numpy())
         else:
-            # CIFA10, NOISE, SVHN, CIFAR100 case
+            # CIFAR10, NOISE, SVHN, CIFAR100 case
             sample_test_data_trans = dataloaders['test'].dataset.transform(sample_test_data)
         prob, pred = eval_single_sample(model, sample_test_data_trans)
 
         # Save to file
         logger.add_entry_to_results_dict(idx, str(trained_label), prob, train_loss, test_loss)
         logger.info(
-            'idx=%d trained_label=[%d,%s], true_label=[%d,%s], loss [train, test]=[%f %f], time=%4.2f[sec]' %
-            (idx, trained_label, classes_trained[trained_label],
-             sample_test_true_label, classes_true[sample_test_true_label],
-             train_loss, test_loss,
-             time_trained_label))
+            'idx=%d trained_label=[%d,%s], true_label=[%d,%s] predict=[%d], loss [train, test]=[%f %f], time=%4.2f[s]'
+            % (idx, trained_label, classes_trained[trained_label],
+               sample_test_true_label, classes_true[sample_test_true_label],
+               np.argmax(prob),
+               train_loss, test_loss,
+               time_trained_label))
 
 
 def freeze_resnet_layers(model, max_freeze_layer, logger):

@@ -172,6 +172,7 @@ class CIFAR10RandomLabels(datasets.CIFAR10):
 
 def create_cifar10_random_label_dataloaders(data_dir, batch_size, num_workers,
                                             label_corrupt_prob=1.0):
+    # Trainset with random labels
     trainset = CIFAR10RandomLabels(root=data_dir,
                                    train=True,
                                    download=True,
@@ -183,12 +184,12 @@ def create_cifar10_random_label_dataloaders(data_dir, batch_size, num_workers,
                                   shuffle=False,
                                   num_workers=num_workers)
 
-    testset = CIFAR10RandomLabels(root=data_dir,
-                                  train=False,
-                                  download=True,
-                                  transform=transforms.Compose([transforms.ToTensor(),
-                                                                normalize]),
-                                  corrupt_prob=label_corrupt_prob)
+    # Testset with real labels
+    testset = datasets.CIFAR10(root=data_dir,
+                               train=False,
+                               download=True,
+                               transform=transforms.Compose([transforms.ToTensor(),
+                                                             normalize]))
     testloader = data.DataLoader(testset,
                                  batch_size=batch_size,
                                  shuffle=False,
