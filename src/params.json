@@ -7,7 +7,7 @@
             "epochs": 10,
             "lr": 0.001,
             "momentum": 0.9,
-            "step_size": [3, 6, 9],
+            "step_size": [10],
             "gamma": 0.1,
             "weight_decay": 0.0001,
             "test_start_idx": 0,
@@ -25,10 +25,10 @@
             "epochs": 350,
             "lr": 0.1,
             "momentum": 0.9,
-            "step_size": [100, 200],
+            "step_size": [350],
             "gamma": 0.1,
-            "weight_decay": 0,
-            "loss_goal": 0.0
+            "weight_decay": 0.0,
+            "acc_goal": 0.9999
         },
         "fit_to_sample": {
             "epochs": 8,
@@ -36,7 +36,7 @@
             "momentum": 0.9,
             "step_size": [6],
             "gamma": 0.1,
-            "weight_decay": 0,
+            "weight_decay": 0.0,
             "test_start_idx": 0,
             "test_end_idx": 299
         }
@@ -77,7 +77,7 @@
             "epochs": 100,
             "lr": 0.01,
             "momentum": 0.9,
-            "step_size": [10, 40, 80],
+            "step_size": [100],
             "gamma": 0.1,
             "weight_decay": 0.0001,
             "loss_goal": 0.0
@@ -86,7 +86,7 @@
             "epochs": 10,
             "lr": 0.0001,
             "momentum": 0.9,
-            "step_size": [3, 6, 9],
+            "step_size": [10],
             "gamma": 0.1,
             "weight_decay": 0.0001,
             "test_start_idx": 0,

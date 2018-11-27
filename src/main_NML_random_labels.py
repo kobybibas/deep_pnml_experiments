@@ -10,12 +10,12 @@ from dataset_utilities import create_cifar10_random_label_dataloaders
 from logger_utilities import Logger
 from train_utilities import TrainClass, eval_single_sample
 from train_utilities import execute_nml_training
-from wide_resnet import WideResNet
 from train_utilities import freeze_resnet_layers
+from wide_resnet import WideResNet
 
 """
 Example of running:
-CUDA_VISIBLE_DEVICES=0,1 python src/main_NML_random_labels.py
+CUDA_VISIBLE_DEVICES=0 python src/main_NML_random_labels.py
 """
 
 # Load training params
@@ -43,7 +43,6 @@ params_initial_training = params['initial_training']
 model_base = WideResNet()
 if params_initial_training['do_initial_training'] is True:
     logger.info('Execute basic training')
-    model_base = torch.nn.DataParallel(model_base) if torch.cuda.device_count() > 1 else model_base
     train_class = TrainClass(filter(lambda p: p.requires_grad, model_base.parameters()),
                              params_initial_training['lr'],
                              params_initial_training['momentum'],
@@ -55,8 +54,7 @@ if params_initial_training['do_initial_training'] is True:
     train_class.freeze_batch_norm = False
     model_base, train_loss, test_loss = train_class.train_model(model_base, dataloaders,
                                                                 params_initial_training['epochs'],
-                                                                params_initial_training['loss_goal'])
-    model_base = model_base.module if torch.cuda.device_count() > 1 else model_base
+                                                                params_initial_training['acc_goal'])
     torch.save(model_base.state_dict(), os.path.join(logger.output_folder, 'random_labels_model_%f.pt' % train_loss))
 else:
     logger.info('Load pretrained model')

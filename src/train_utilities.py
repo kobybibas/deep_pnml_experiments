@@ -34,7 +34,7 @@ class TrainClass:
                                                         gamma=gamma)
         self.freeze_batch_norm = True
 
-    def train_model(self, model, dataloaders, num_epochs=10, loss_goal=None):
+    def train_model(self, model, dataloaders, num_epochs=10, acc_goal=None):
         # self.model = copy.deepcopy(model)
         self.model = model.cuda() if torch.cuda.is_available() else model
         self.num_epochs = num_epochs
@@ -64,7 +64,7 @@ class TrainClass:
                                 lr, epoch_time))
 
             # Stop training if desired goal is achieved
-            if loss_goal is not None and train_loss < loss_goal:
+            if acc_goal is not None and train_acc >= acc_goal:
                 break
         test_loss, test_acc = self.test(dataloaders['test'])
 
