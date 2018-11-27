@@ -36,8 +36,7 @@ class TrainClass:
         self.freeze_batch_norm = True
 
     def train_model(self, model, dataloaders, num_epochs=10, acc_goal=None):
-        self.model = copy.deepcopy(model)
-        self.model = self.model.cuda() if torch.cuda.is_available() else self.model
+        self.model = model.cuda() if torch.cuda.is_available() else model
         self.num_epochs = num_epochs
         train_loss, train_acc = torch.tensor([-1.]), torch.tensor([-1.])
         test_loss, test_acc = torch.tensor([-1.]), torch.tensor([-1.])

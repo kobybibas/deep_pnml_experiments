@@ -1,5 +1,4 @@
-from __future__ import print_function
-
+import copy
 import json
 import os
 import time
@@ -18,7 +17,7 @@ CUDA_VISIBLE_DEVICES=0 python src/main.py
 """
 
 
-def run_experiment(exp_type: str):
+def run_experiment(experiment_type: str):
     ################
     # Load training params
     with open(os.path.join('src', 'params.json')) as f:
@@ -26,7 +25,7 @@ def run_experiment(exp_type: str):
 
     ################
     # Class that depends ins the experiment type
-    experiment_h = Experiment(exp_type, params)
+    experiment_h = Experiment(experiment_type, params)
     params = experiment_h.get_params()
 
     ################
@@ -76,7 +75,8 @@ def run_experiment(exp_type: str):
     # Train ERM model to be as same as PNML
     logger.info('Train ERM model')
     params_fit_to_sample = params['fit_to_sample']
-    train_class = TrainClass(filter(lambda p: p.requires_grad, model_base.parameters()),
+    model_erm = copy.deepcopy(model_base)
+    train_class = TrainClass(filter(lambda p: p.requires_grad, model_erm.parameters()),
                              params_fit_to_sample['lr'],
                              params_fit_to_sample['momentum'],
                              params_fit_to_sample['step_size'],
@@ -84,8 +84,8 @@ def run_experiment(exp_type: str):
                              params_fit_to_sample['weight_decay'],
                              logger.logger)
     train_class.eval_test_during_train = False
-    model_erm_base, train_loss, test_loss = train_class.train_model(model_base, dataloaders,
-                                                                    params_fit_to_sample['epochs'])
+    model_erm, train_loss, test_loss = train_class.train_model(model_erm, dataloaders,
+                                                               params_fit_to_sample['epochs'])
     ############################
     # Iterate over test dataset
     logger.info('Iterate over test dataset')
@@ -102,7 +102,7 @@ def run_experiment(exp_type: str):
         else:
             # CIFAR10, NOISE, SVHN, CIFAR100 case
             sample_test_data_trans = dataloaders['test'].dataset.transform(sample_test_data)
-        prob_org, _ = eval_single_sample(model_erm_base, sample_test_data_trans)
+        prob_org, _ = eval_single_sample(model_erm, sample_test_data_trans)
         logger.add_org_prob_to_results_dict(idx, prob_org, sample_test_true_label)
 
         # NML training- train the model with test sample
@@ -121,5 +121,5 @@ if __name__ == "__main__":
     parser.add_argument('-t', '--experiment_type', help='Type of experiment to execute', required=True)
     args = vars(parser.parse_args())
 
-    run_experiment(args['exp_type'])
+    run_experiment(args['experiment_type'])
     print('Finish experiment')
