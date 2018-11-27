@@ -2,7 +2,7 @@ import json
 import os
 import time
 
-from LeNet import Net
+from mpl import Net
 from dataset_utilities import create_mnist_dataloaders
 from logger_utilities import Logger
 from train_utilities import TrainClass, eval_single_sample, execute_nml_training
@@ -43,8 +43,8 @@ model_base, train_loss, test_loss = train_class.train_model(model_base, dataload
 
 ################
 # Freeze layers
-logger.info('Freeze layer: %d' % params['unfreeze_layer'])
-model_base = freeze_resnet_layers(model_base, params['unfreeze_layer'] + 1, logger)
+logger.info('Freeze layer: %d' % params['freeze_layer'])
+model_base = freeze_resnet_layers(model_base, params['freeze_layer'] + 1, logger)
 
 ############################
 # Iterate over test dataset

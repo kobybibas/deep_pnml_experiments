@@ -32,7 +32,6 @@ dataloaders = {'train': trainloader, 'test': testloader, 'classes': classes}
 logger.info('Execute basic training')
 params_fit_to_sample = params['fit_to_sample']
 model_base = load_pretrained_resnet20_cifar10_model(resnet20())
-model_base = torch.nn.DataParallel(model_base) if torch.cuda.device_count() > 1 else model_base
 train_class = TrainClass(filter(lambda p: p.requires_grad, model_base.parameters()),
                          params_fit_to_sample['lr'],
                          params_fit_to_sample['momentum'],
@@ -43,7 +42,6 @@ train_class = TrainClass(filter(lambda p: p.requires_grad, model_base.parameters
 train_class.eval_test_during_train = False
 model_base, train_loss, test_loss = train_class.train_model(model_base, dataloaders,
                                                             params_fit_to_sample['epochs'])
-model_base = model_base.module if torch.cuda.device_count() > 1 else model_base
 
 ################
 # Freeze layers

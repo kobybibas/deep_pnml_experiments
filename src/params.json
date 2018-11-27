@@ -70,7 +70,7 @@
     "nml_mnist": {
         "batch_size": 128,
         "num_workers": 4,
-        "unfreeze_layer": 0,
+        "freeze_layer": 0,
         "initial_training": {
             "do_initial_training": true,
             "pretrained_model_path": "",
