@@ -8,7 +8,7 @@ import pathlib
 
 
 class Logger:
-    def __init__(self, experiment_type, output_root):
+    def __init__(self, experiment_type: str, output_root: str):
         # Create logger
         logger = logging.getLogger()
         logger.setLevel(logging.DEBUG)
@@ -32,15 +32,15 @@ class Logger:
         self.define_json_output(os.path.join(self.output_folder, 'results_%s_%s.json' %
                                              (experiment_type, self.unique_time)))
 
-    def define_log_file(self, log_file_name):
+    def define_log_file(self, log_file_name: str):
         fh = logging.FileHandler(log_file_name)
         fh.setLevel(logging.DEBUG)
         self.logger.addHandler(fh)
 
-    def info(self, string_to_print):
+    def info(self, string_to_print: str):
         self.logger.info(string_to_print)
 
-    def define_json_output(self, json_file_name):
+    def define_json_output(self, json_file_name: str):
         self.json_file_name = json_file_name
 
     def save_json_file(self):

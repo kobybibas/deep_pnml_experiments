@@ -5,8 +5,8 @@ import time
 from mpl import Net
 from dataset_utilities import create_mnist_dataloaders
 from logger_utilities import Logger
-from train_utilities import TrainClass, eval_single_sample, execute_nml_training
-from train_utilities import freeze_resnet_layers
+from train_utilities import TrainClass, eval_single_sample, execute_pnml_training
+from train_utilities import freeze_model_layers
 
 # Load training params
 with open(os.path.join('src', 'params.json')) as f:
@@ -44,7 +44,7 @@ model_base, train_loss, test_loss = train_class.train_model(model_base, dataload
 ################
 # Freeze layers
 logger.info('Freeze layer: %d' % params['freeze_layer'])
-model_base = freeze_resnet_layers(model_base, params['freeze_layer'] + 1, logger)
+model_base = freeze_model_layers(model_base, params['freeze_layer'] + 1, logger)
 
 ############################
 # Iterate over test dataset
@@ -70,8 +70,8 @@ for idx in range(params_fit_to_sample['test_start_idx'], params_fit_to_sample['t
     logger.add_org_prob_to_results_dict(idx, prob_org, sample_test_true_label)
 
     # NML training- train the model with test sample
-    execute_nml_training(params_fit_to_sample, dataloaders, sample_test_data, sample_test_true_label, idx,
-                         model_base, logger)
+    execute_pnml_training(params_fit_to_sample, dataloaders, sample_test_data, sample_test_true_label, idx,
+                          model_base, logger)
 
     # Log and save
     logger.save_json_file()

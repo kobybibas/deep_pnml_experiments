@@ -9,8 +9,8 @@ import torch
 from dataset_utilities import create_cifar10_random_label_dataloaders
 from logger_utilities import Logger
 from train_utilities import TrainClass, eval_single_sample
-from train_utilities import execute_nml_training
-from train_utilities import freeze_resnet_layers
+from train_utilities import execute_pnml_training
+from train_utilities import freeze_model_layers
 from wide_resnet import WideResNet
 
 """
@@ -64,7 +64,7 @@ else:
 ################
 # Freeze layers
 logger.info('Freeze layer: %d' % params['freeze_layer'])
-model_base = freeze_resnet_layers(model_base, params['freeze_layer'], logger)
+model_base = freeze_model_layers(model_base, params['freeze_layer'], logger)
 
 ############################
 # Iterate over test dataset
@@ -80,8 +80,8 @@ for idx in range(params_fit_to_sample['test_start_idx'], params_fit_to_sample['t
     logger.add_org_prob_to_results_dict(idx, prob_org, sample_test_true_label)
 
     # NML training- train the model with test sample
-    execute_nml_training(params_fit_to_sample, dataloaders, sample_test_data, sample_test_true_label, idx,
-                         model_base, logger)
+    execute_pnml_training(params_fit_to_sample, dataloaders, sample_test_data, sample_test_true_label, idx,
+                          model_base, logger)
 
     # Log and save
     logger.save_json_file()

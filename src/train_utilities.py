@@ -1,4 +1,3 @@
-import copy
 import logging
 import sys
 import time
@@ -14,12 +13,26 @@ from dataset_utilities import insert_sample_to_dataset
 
 
 class TrainClass:
-    def __init__(self, params_to_train, learning_rate, momentum, step_size, gamma, weight_decay,
+    """
+    Class which execute train on a DNN model.
+    """
+
+    def __init__(self, params_to_train, learning_rate: float, momentum: float, step_size: list, gamma: float,
+                 weight_decay: float,
                  logger=None):
+        """
+        Initialize train class object.
+        :param params_to_train: the parameters of pytorch Module that will be trained.
+        :param learning_rate: initial learning rate for the optimizer.
+        :param momentum:  initial momentum rate for the optimizer.
+        :param step_size: reducing the learning rate by gamma each step_size.
+        :param gamma:  reducing the learning rate by gamma each step_size.
+        :param weight_decay: L2 regularization.
+        :param logger: logger class in order to print logs and save results.
+        """
 
         self.num_epochs = 20
         self.logger = logger if logger is not None else logging.StreamHandler(sys.stdout)
-        self.model = None
         self.eval_test_during_train = True
         self.eval_test_in_end = True
         self.print_during_train = True
@@ -35,8 +48,17 @@ class TrainClass:
                                                         gamma=gamma)
         self.freeze_batch_norm = True
 
-    def train_model(self, model, dataloaders, num_epochs=10, acc_goal=None):
-        self.model = model.cuda() if torch.cuda.is_available() else model
+    def train_model(self, model, dataloaders, num_epochs: int = 10, acc_goal=None):
+        """
+        Train DNN model using some trainset.
+        :param model: the model which will be trained.
+        :param dataloaders: contains the trainset for training and testset for evaluation.
+        :param num_epochs: number of epochs to train the model.
+        :param acc_goal: stop training when getting to this accuracy rate on the trainset.
+        :return: trained model (also the training of the models happen inplace)
+                 and the loss of the trainset and testset.
+        """
+        model = model.cuda() if torch.cuda.is_available() else model
         self.num_epochs = num_epochs
         train_loss, train_acc = torch.tensor([-1.]), torch.tensor([-1.])
         test_loss, test_acc = torch.tensor([-1.]), torch.tensor([-1.])
@@ -48,9 +70,9 @@ class TrainClass:
         for epoch in range(self.num_epochs):
 
             epoch_start_time = time.time()
-            train_loss, train_acc = self.train(dataloaders['train'])
+            train_loss, train_acc = self.train(model, dataloaders['train'])
             if self.eval_test_during_train is True:
-                test_loss, test_acc = self.test(dataloaders['test'])
+                test_loss, test_acc = self.test(model, dataloaders['test'])
             else:
                 test_loss, test_acc = torch.tensor([-1.]), torch.tensor([-1.])
             epoch_time = time.time() - epoch_start_time
@@ -66,7 +88,7 @@ class TrainClass:
             # Stop training if desired goal is achieved
             if acc_goal is not None and train_acc >= acc_goal:
                 break
-        test_loss, test_acc = self.test(dataloaders['test'])
+        test_loss, test_acc = self.test(model, dataloaders['test'])
 
         # Print and save
         self.logger.info('----- [train test] loss =[%f %f], acc=[%f %f] epoch_time=%.2f' %
@@ -74,14 +96,20 @@ class TrainClass:
                           epoch_time))
         train_loss_output = float(train_loss.cpu().detach().numpy().round(16))
         test_loss_output = float(test_loss.cpu().detach().numpy().round(16))
-        return self.model, train_loss_output, test_loss_output
+        return model, train_loss_output, test_loss_output
 
-    def train(self, train_loader):
-        self.model.train()
+    def train(self, model, train_loader):
+        """
+        Execute one epoch of training
+        :param model: the model that will be trained.
+        :param train_loader: contains the trainset to train.
+        :return: the loss and accuracy of the trainset.
+        """
+        model.train()
 
         # Turn off batch normalization update
         if self.freeze_batch_norm is True:
-            self.model = self.model.apply(set_bn_eval)
+            model = model.apply(set_bn_eval)
 
         train_loss = 0
         correct = 0
@@ -93,7 +121,7 @@ class TrainClass:
 
             # Forward
             self.optimizer.zero_grad()
-            outputs = self.model(images)
+            outputs = model(images)
             loss = self.criterion(outputs, labels)  # Negative log-loss
             _, predicted = torch.max(outputs.data, 1)
             correct += (predicted == labels).sum().item()
@@ -108,8 +136,14 @@ class TrainClass:
         train_acc = correct / len(train_loader.dataset)
         return train_loss, train_acc
 
-    def test(self, test_loader):
-        self.model.eval()
+    def test(self, model, test_loader):
+        """
+        Evaluate the performance of the model on the trainset.
+        :param model: the model that will be evaluated.
+        :param test_loader: testset on which the evaluation will executed.
+        :return: the loss and accuracy on the testset.
+        """
+        model.eval()
         test_loss = 0
         correct = 0
         with torch.no_grad():
@@ -117,7 +151,7 @@ class TrainClass:
                 data = data.cuda() if torch.cuda.is_available() else data
                 labels = labels.cuda() if torch.cuda.is_available() else labels
 
-                outputs = self.model(data)
+                outputs = model(data)
                 loss = self.criterion(outputs, labels)
                 test_loss += loss * len(data)  # loss sum for all the batch
                 _, predicted = torch.max(outputs.data, 1)
@@ -129,6 +163,12 @@ class TrainClass:
 
 
 def eval_single_sample(model, test_sample_data):
+    """
+    Predict the probabilities assignment of the test sample by the model
+    :param model: the model which will evaluate the test sample
+    :param test_sample_data: the data of the test sample
+    :return: prob: probabilities vector. pred: the class prediction of the test sample
+    """
     # test_sample = (data, label)
 
     # Test the sample
@@ -147,13 +187,31 @@ def eval_single_sample(model, test_sample_data):
 
 
 def set_bn_eval(model):
+    """
+    Freeze batch normalization layers for better control on training
+    :param model: the model which the freeze of BN layers will be executed
+    :return: None, the freeze is in place on the model.
+    """
     classname = model.__class__.__name__
     if classname.find('BatchNorm') != -1:
         model.eval()
 
 
-def execute_nml_training(train_params, dataloaders_input, sample_test_data, sample_test_true_label, idx,
-                         model_base_input, logger):
+def execute_pnml_training(train_params: dict, dataloaders_input: dict,
+                          sample_test_data, sample_test_true_label, idx: int,
+                          model_base_input, logger):
+    """
+    Execute the PNML procedure: for each label train the model and save the prediction afterword.
+    :param train_params: parameters of training the model for each label
+    :param dataloaders_input: dataloaders which contains the trainset
+    :param sample_test_data: the data of the test sample that will be evaluated
+    :param sample_test_true_label: the true label of the test sample
+    :param idx: the index in the testset dataset of the test sample
+    :param model_base_input: the base model from which the train will start
+    :param logger: logger class to print logs and save results to file
+    :return: None
+    """
+
     # Check train_params contains all required keys
     required_keys = ['lr', 'momentum', 'step_size', 'gamma', 'weight_decay', 'epochs']
     for key in required_keys:
@@ -213,7 +271,14 @@ def execute_nml_training(train_params, dataloaders_input, sample_test_data, samp
                time_trained_label))
 
 
-def freeze_resnet_layers(model, max_freeze_layer, logger):
+def freeze_model_layers(model, max_freeze_layer: int, logger):
+    """
+    Freeze model layers until max_freeze_layer, all others can be updated
+    :param model: to model on which the freeze will be executed
+    :param max_freeze_layer: the maximum depth of freeze layer
+    :param logger: logger class in order to print the layers and their status (freeze/unfreeze)
+    :return: model with freeze layers
+    """
     # todo: currently max_freeze_layer 0 and 1 are the same. move ct+=1 to the end
     ct = 0
     for child in model.children():

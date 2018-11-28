@@ -8,15 +8,15 @@ from wide_resnet import WideResNet
 
 
 class Experiment:
-    def __init__(self, type, params):
-        if type not in ['pnml_cifar10',
-                        'random_labels',
-                        'out_of_dist_svhn',
-                        'out_of_dist_noise',
-                        'pnml_mnist']:
+    def __init__(self, exp_type: str, params: dict):
+        if exp_type not in ['pnml_cifar10',
+                            'random_labels',
+                            'out_of_dist_svhn',
+                            'out_of_dist_noise',
+                            'pnml_mnist']:
             raise NameError('No experiment type: %s' % type)
         self.params = params
-        self.exp_type = type
+        self.exp_type = exp_type
         self.executed_get_params = False
 
     def get_params(self):
@@ -36,7 +36,7 @@ class Experiment:
         self.executed_get_params = True
         return self.params
 
-    def get_dataloaders(self, data_folder='./data'):
+    def get_dataloaders(self, data_folder: str = './data'):
 
         if self.executed_get_params is False:
             _ = self.get_params()

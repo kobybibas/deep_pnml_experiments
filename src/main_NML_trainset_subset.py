@@ -10,7 +10,7 @@ from dataset_utilities import create_cifar10_dataloaders_with_training_subset
 from logger_utilities import Logger
 from resnet import resnet20
 from train_utilities import TrainClass, eval_single_sample
-from train_utilities import execute_nml_training
+from train_utilities import execute_pnml_training
 
 # Load training params
 with open(os.path.join('src', 'params.json')) as f:
@@ -60,8 +60,8 @@ for idx in range(params['fit_to_sample']['test_start_idx'], params['fit_to_sampl
     logger.add_org_prob_to_results_dict(idx, prob_org, sample_test_true_label)
 
     # NML training- train the model with test sample
-    execute_nml_training(params['fit_to_sample'], dataloaders, sample_test_data, sample_test_true_label, idx,
-                         model_base, logger)
+    execute_pnml_training(params['fit_to_sample'], dataloaders, sample_test_data, sample_test_true_label, idx,
+                          model_base, logger)
     # Log and save
     logger.save_json_file()
     time_idx = time.time() - time_start_idx

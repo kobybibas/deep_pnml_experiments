@@ -8,8 +8,8 @@ import torch
 
 from experimnet_utilities import Experiment
 from logger_utilities import Logger
-from train_utilities import TrainClass, eval_single_sample, execute_nml_training
-from train_utilities import freeze_resnet_layers
+from train_utilities import TrainClass, eval_single_sample, execute_pnml_training
+from train_utilities import freeze_model_layers
 
 """
 Example of running:
@@ -69,7 +69,7 @@ def run_experiment(experiment_type: str):
     ################
     # Freeze layers
     logger.info('Freeze layer: %d' % params['freeze_layer'])
-    model_base = freeze_resnet_layers(model_base, params['freeze_layer'], logger)
+    model_base = freeze_model_layers(model_base, params['freeze_layer'], logger)
 
     ############################
     # Train ERM model to be as same as PNML
@@ -106,8 +106,8 @@ def run_experiment(experiment_type: str):
         logger.add_org_prob_to_results_dict(idx, prob_org, sample_test_true_label)
 
         # NML training- train the model with test sample
-        execute_nml_training(params_fit_to_sample, dataloaders, sample_test_data, sample_test_true_label, idx,
-                             model_base, logger)
+        execute_pnml_training(params_fit_to_sample, dataloaders, sample_test_data, sample_test_true_label, idx,
+                              model_base, logger)
 
         # Log and save
         logger.save_json_file()
@@ -118,7 +118,9 @@ def run_experiment(experiment_type: str):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Applications of Deep PNML')
-    parser.add_argument('-t', '--experiment_type', help='Type of experiment to execute', required=True)
+    parser.add_argument('-t', '--experiment_type', default='pnml_cifar10',
+                        help='Type of experiment to execute',
+                        type=str)
     args = vars(parser.parse_args())
 
     run_experiment(args['experiment_type'])
