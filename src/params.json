@@ -31,7 +31,7 @@
             "acc_goal": 0.9999
         },
         "fit_to_sample": {
-            "epochs": 8,
+            "epochs": 6,
             "lr": 0.01,
             "momentum": 0.9,
             "step_size": [6],
