@@ -8,11 +8,19 @@ import torch
 from torch.utils import data
 from torchvision import transforms, datasets
 
+# Normalization for CIFAR10 dataset
 normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])
 
 
 def insert_sample_to_dataset(trainloader, sample_to_insert_data, sample_to_insert_label):
+    """
+    Inserting test sample into the trainset
+    :param trainloader: contains the trainset
+    :param sample_to_insert_data: the data which we want to insert
+    :param sample_to_insert_label: the data label which we want to insert
+    :return: dataloader which contains the trainset with the additional sample
+    """
     sample_to_insert_label_expended = np.expand_dims(sample_to_insert_label, 0)
     sample_to_insert_data_expended = np.expand_dims(sample_to_insert_data, 0)
 
@@ -40,7 +48,14 @@ def insert_sample_to_dataset(trainloader, sample_to_insert_data, sample_to_inser
     return trainloader_with_sample
 
 
-def create_svhn_dataloaders(data_dir, batch_size, num_workers):
+def create_svhn_dataloaders(data_dir: str = './data', batch_size: int = 128, num_workers: int = 4):
+    """
+    create train and test pytorch dataloaders for SVHN dataset
+    :param data_dir: the folder that will contain the data
+    :param batch_size: the size of the batch for test and train loaders
+    :param num_workers: number of cpu workers which loads the GPU with the dataset
+    :return: train and test loaders along with mapping between labels and class names
+    """
     data_dir = os.path.join(data_dir, 'svhn')
     trainset = datasets.SVHN(root=data_dir,
                              split='train',
@@ -66,7 +81,14 @@ def create_svhn_dataloaders(data_dir, batch_size, num_workers):
     return trainloader, testloader, classes
 
 
-def create_cifar10_dataloaders(data_dir, batch_size, num_workers):
+def create_cifar10_dataloaders(data_dir: str = './data', batch_size: int = 128, num_workers: int = 4):
+    """
+    create train and test pytorch dataloaders for CIFAR10 dataset
+    :param data_dir: the folder that will contain the data
+    :param batch_size: the size of the batch for test and train loaders
+    :param num_workers: number of cpu workers which loads the GPU with the dataset
+    :return: train and test loaders along with mapping between labels and class names
+    """
     trainset = datasets.CIFAR10(root=data_dir,
                                 train=True,
                                 download=True,
@@ -91,7 +113,14 @@ def create_cifar10_dataloaders(data_dir, batch_size, num_workers):
     return trainloader, testloader, classes
 
 
-def create_cifar100_dataloaders(data_dir, batch_size, num_workers):
+def create_cifar100_dataloaders(data_dir: str = './data', batch_size: int = 128, num_workers: int = 4):
+    """
+    create train and test pytorch dataloaders for CIFAR100 dataset
+    :param data_dir: the folder that will contain the data
+    :param batch_size: the size of the batch for test and train loaders
+    :param num_workers: number of cpu workers which loads the GPU with the dataset
+    :return: train and test loaders along with mapping between labels and class names
+    """
     trainset = datasets.CIFAR100(root=data_dir,
                                  train=True,
                                  download=True,
@@ -130,6 +159,7 @@ def create_cifar100_dataloaders(data_dir, batch_size, num_workers):
     return trainloader, testloader, classes
 
 
+# TODO: make noise dataloader so we can use main script
 def generate_noise_sample():
     random_sample_data = np.random.randint(256, size=(32, 32, 3), dtype='uint8')
     random_sample_label = -1
@@ -170,8 +200,18 @@ class CIFAR10RandomLabels(datasets.CIFAR10):
             self.test_labels = labels
 
 
-def create_cifar10_random_label_dataloaders(data_dir, batch_size, num_workers,
+def create_cifar10_random_label_dataloaders(data_dir: str = './data', batch_size: int = 128, num_workers: int = 4,
                                             label_corrupt_prob=1.0):
+    """
+    create train and test pytorch dataloaders for CIFAR10 dataset.
+    Train set can be with random labels, the probability to be random depends on label_corrupt_prob.
+    :param data_dir: the folder that will contain the data.
+    :param batch_size: the size of the batch for test and train loaders.
+    :param label_corrupt_prob: the probability to be random of label of train sample.
+    :param num_workers: number of cpu workers which loads the GPU with the dataset.
+    :return: train and test loaders along with mapping between labels and class names.
+    """
+
     # Trainset with random labels
     trainset = CIFAR10RandomLabels(root=data_dir,
                                    train=True,
@@ -199,8 +239,20 @@ def create_cifar10_random_label_dataloaders(data_dir, batch_size, num_workers,
     return trainloader, testloader, classes
 
 
-def create_cifar10_dataloaders_with_training_subset(data_dir, batch_size, num_workers, trainset_size,
+def create_cifar10_dataloaders_with_training_subset(data_dir: str = './data', batch_size: int = 128,
+                                                    num_workers: int = 4,
+                                                    trainset_size: int = 50000,
                                                     adjust_sgd_update=False):
+    """
+    create train and test pytorch dataloaders for CIFAR10 dataset.
+    Train set is a subset of the orignal CIFAR10 dataset.
+    :param data_dir: the folder that will contain the data
+    :param batch_size: the size of the batch for test and train loaders.
+    :param trainset_size: the number of samples of the trainset
+    :param adjust_sgd_update: weather to upsample the trainset (make duplicate) so the total size will be as the original.
+    :param num_workers: number of cpu workers which loads the GPU with the dataset
+    :return: train and test loaders along with mapping between labels and class names
+    """
     np.random.seed(12345)
     trainset = datasets.CIFAR10(root=data_dir,
                                 train=True,
@@ -239,7 +291,16 @@ def create_cifar10_dataloaders_with_training_subset(data_dir, batch_size, num_wo
     return trainloader, testloader, classes
 
 
-def create_mnist_dataloaders(data_dir, batch_size, num_workers):
+def create_mnist_dataloaders(data_dir: str = './data', batch_size: int = 128, num_workers: int = 4):
+    """
+    create train and test pytorch dataloaders for MNIST dataset
+    :param data_dir: the folder that will contain the data
+    :param batch_size: the size of the batch for test and train loaders
+    :param num_workers: number of cpu workers which loads the GPU with the dataset
+    :return: train and test loaders along with mapping between labels and class names
+    """
+
+    # Normalization for MNIST dataset
     normalize_mist = transforms.Normalize(mean=[0.1307],
                                           std=[0.3081])
     trainset = datasets.MNIST(root=data_dir,
