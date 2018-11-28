@@ -88,6 +88,7 @@ def run_experiment(experiment_type: str):
                                                                params_fit_to_sample['epochs'])
     ############################
     # Iterate over test dataset
+    logger.info('Execute PNML')
     logger.info('Iterate over test dataset')
     for idx in range(params_fit_to_sample['test_start_idx'], params_fit_to_sample['test_end_idx'] + 1):
         time_start_idx = time.time()
