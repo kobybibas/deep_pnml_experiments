@@ -96,6 +96,11 @@ def run_experiment(experiment_type: str):
         # Extract a sample from test dataset and check output of base model
         sample_test_data = dataloaders['test'].dataset.test_data[idx]
         sample_test_true_label = dataloaders['test'].dataset.test_labels[idx]
+
+        # Make sure the data is HxWxC:
+        if len(sample_test_data.shape) == 3 and sample_test_data.shape[2] > sample_test_data.shape[0]:
+            sample_test_data = sample_test_data.transpose([1, 2, 0])
+
         # Evaluate Base model
         if sample_test_data.shape == (28, 28):  # todo make more elegant
             # Mnist case

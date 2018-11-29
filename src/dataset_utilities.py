@@ -8,6 +8,8 @@ import torch
 from torch.utils import data
 from torchvision import transforms, datasets
 
+from noise_dataset_class import NoiseDataset
+
 # Normalization for CIFAR10 dataset
 normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])
@@ -56,29 +58,33 @@ def create_svhn_dataloaders(data_dir: str = './data', batch_size: int = 128, num
     :param num_workers: number of cpu workers which loads the GPU with the dataset
     :return: train and test loaders along with mapping between labels and class names
     """
-    data_dir = os.path.join(data_dir, 'svhn')
-    trainset = datasets.SVHN(root=data_dir,
-                             split='train',
-                             download=True,
-                             transform=transforms.Compose([transforms.ToTensor(),
-                                                           normalize]))
+
+    trainset = datasets.CIFAR10(root=data_dir,
+                                train=True,
+                                download=True,
+                                transform=transforms.Compose([transforms.ToTensor(),
+                                                              normalize]))
     trainloader = data.DataLoader(trainset,
                                   batch_size=batch_size,
                                   shuffle=False,
                                   num_workers=num_workers)
 
+    data_dir = os.path.join(data_dir, 'svhn')
     testset = datasets.SVHN(root=data_dir,
                             split='test',
                             download=True,
                             transform=transforms.Compose([transforms.ToTensor(),
                                                           normalize]))
+    testset.test_data = testset.data
+    testset.test_labels = testset.labels
     testloader = data.DataLoader(testset,
                                  batch_size=batch_size,
                                  shuffle=False,
                                  num_workers=num_workers)
-    classes = ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')
+    classes_cifar10 = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+    classes_svhn = ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')
 
-    return trainloader, testloader, classes
+    return trainloader, testloader, classes_svhn, classes_cifar10
 
 
 def create_cifar10_dataloaders(data_dir: str = './data', batch_size: int = 128, num_workers: int = 4):
@@ -159,7 +165,6 @@ def create_cifar100_dataloaders(data_dir: str = './data', batch_size: int = 128,
     return trainloader, testloader, classes
 
 
-# TODO: make noise dataloader so we can use main script
 def generate_noise_sample():
     random_sample_data = np.random.randint(256, size=(32, 32, 3), dtype='uint8')
     random_sample_label = -1
@@ -301,8 +306,7 @@ def create_mnist_dataloaders(data_dir: str = './data', batch_size: int = 128, nu
     """
 
     # Normalization for MNIST dataset
-    normalize_mist = transforms.Normalize(mean=[0.1307],
-                                          std=[0.3081])
+    normalize_mist = transforms.Normalize(mean=[0.1307], std=[0.3081])
     trainset = datasets.MNIST(root=data_dir,
                               train=True,
                               download=True,
@@ -325,3 +329,45 @@ def create_mnist_dataloaders(data_dir: str = './data', batch_size: int = 128, nu
     classes = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
 
     return trainloader, testloader, classes
+
+
+######
+# Functions for experiments utilities
+######
+def tensor_to_long_type(label):
+    label = int(label)
+    return label
+
+
+def dataloaders_noise(data_dir: str = './data', batch_size: int = 128, num_workers: int = 4):
+    """
+    create train and test pytorch dataloaders for CIFAR10 dataset
+    :param data_dir: the folder that will contain the data
+    :param batch_size: the size of the batch for test and train loaders
+    :param num_workers: number of cpu workers which loads the GPU with the dataset
+    :return: train and test loaders along with mapping between labels and class names
+    """
+    trainset = datasets.CIFAR10(root=data_dir,
+                                train=True,
+                                download=True,
+                                transform=transforms.Compose([transforms.ToTensor(),
+                                                              normalize]))
+    trainloader = data.DataLoader(trainset,
+                                  batch_size=batch_size,
+                                  shuffle=False,
+                                  num_workers=num_workers)
+
+    testset = NoiseDataset(root=data_dir,
+                           transform=transforms.Compose([transforms.ToTensor(),
+                                                         normalize]))
+    testloader = data.DataLoader(testset,
+                                 batch_size=batch_size,
+                                 shuffle=False,
+                                 num_workers=num_workers)
+    classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+
+    dataloaders = {'train': trainloader,
+                   'test': testloader,
+                   'classes': classes,
+                   'classes_noise': ('Noise',) * 10}
+    return dataloaders

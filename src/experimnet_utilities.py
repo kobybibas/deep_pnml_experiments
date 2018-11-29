@@ -2,6 +2,7 @@ from dataset_utilities import create_cifar10_dataloaders
 from dataset_utilities import create_cifar10_random_label_dataloaders
 from dataset_utilities import create_mnist_dataloaders
 from dataset_utilities import create_svhn_dataloaders
+from dataset_utilities import dataloaders_noise
 from mpl import Net
 from resnet import resnet20, load_pretrained_resnet20_cifar10_model
 from wide_resnet import WideResNet
@@ -58,26 +59,20 @@ class Experiment:
                            'test': testloader,
                            'classes': classes}
         elif self.exp_type == 'out_of_dist_svhn':
-            trainloader, testloader, classes = create_cifar10_dataloaders(data_folder,
-                                                                          self.params['batch_size'],
-                                                                          self.params['num_workers'])
-            _, testloader_svhn, classes_svhn = create_svhn_dataloaders(data_folder,
-                                                                       self.params['batch_size'],
-                                                                       self.params['num_workers'])
+            trainloader, testloader_svhn, classes_svhn, classes_cifar10 = create_svhn_dataloaders(data_folder,
+                                                                                                  self.params[
+                                                                                                      'batch_size'],
+                                                                                                  self.params[
+                                                                                                      'num_workers'])
             dataloaders = {'train': trainloader,
                            'test': testloader_svhn,
-                           'classes': classes,
+                           'classes': classes_cifar10,
                            'classes_svhn': classes_svhn}
 
         elif self.exp_type == 'out_of_dist_noise':
-            trainloader, testloader, classes = create_cifar10_dataloaders(data_folder,
-                                                                          self.params['batch_size'],
-                                                                          self.params['num_workers'])
-            classes_noise = ('Noise',) * 10
-            dataloaders = {'train': trainloader,
-                           'test': testloader,
-                           'classes': classes,
-                           'classes_noise': classes_noise}
+            dataloaders = dataloaders_noise(data_folder,
+                                            self.params['batch_size'],
+                                            self.params['num_workers'])
 
         elif self.exp_type == 'pnml_mnist':
             trainloader, testloader, classes = create_mnist_dataloaders(data_folder,

@@ -30,7 +30,7 @@ with open(os.path.join(logger.output_folder, 'params.json'), 'w', encoding='utf8
 # Load datasets
 data_folder = './data'
 trainloader, testloader, classes = create_cifar10_dataloaders(data_folder, params['batch_size'], params['num_workers'])
-_, testloader_svhn, classes_svhn = create_svhn_dataloaders(data_folder, params['batch_size'], params['num_workers'])
+_, testloader_svhn, classes_svhn, _ = create_svhn_dataloaders(data_folder, params['batch_size'], params['num_workers'])
 dataloaders = {'train': trainloader, 'test': testloader_svhn,
                'classes': classes, 'classes_svhn': classes_svhn}
 
