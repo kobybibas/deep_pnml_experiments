@@ -1,3 +1,4 @@
+import copy
 import logging
 import sys
 import time
@@ -249,15 +250,13 @@ def execute_pnml_training(train_params: dict, dataloaders_input: dict,
         model, train_loss, test_loss = train_class.train_model(model, dataloaders, train_params['epochs'])
         time_trained_label = time.time() - time_trained_label_start
 
-        # Evaluate trained model
-        if sample_test_data.shape == (28, 28):
-            # Mnist case
-            sample_test_data_trans = dataloaders['test'].dataset.transform(sample_test_data.
-                                                                           unsqueeze(2).
-                                                                           numpy())
-        else:
-            # CIFAR10, NOISE, SVHN, CIFAR100 case
-            sample_test_data_trans = dataloaders['test'].dataset.transform(sample_test_data)
+        # Execute transformation
+        sample_test_data_for_trans = copy.deepcopy(sample_test_data)
+        if len(sample_test_data.shape) == 2:
+            sample_test_data_for_trans = sample_test_data_for_trans.unsqueeze(2).numpy()
+        sample_test_data_trans = dataloaders['test'].dataset.transform(sample_test_data_for_trans)
+
+        # Evaluate with base model
         prob, pred = eval_single_sample(model, sample_test_data_trans)
 
         # Save to file

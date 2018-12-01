@@ -101,13 +101,13 @@ def run_experiment(experiment_type: str):
         if len(sample_test_data.shape) == 3 and sample_test_data.shape[2] > sample_test_data.shape[0]:
             sample_test_data = sample_test_data.transpose([1, 2, 0])
 
-        # Evaluate Base model
-        if sample_test_data.shape == (28, 28):  # todo make more elegant
-            # Mnist case
-            sample_test_data_trans = dataloaders['test'].dataset.transform(sample_test_data.unsqueeze(2).numpy())
-        else:
-            # CIFAR10, NOISE, SVHN, CIFAR100 case
-            sample_test_data_trans = dataloaders['test'].dataset.transform(sample_test_data)
+        # Execute transformation
+        sample_test_data_for_trans = copy.deepcopy(sample_test_data)
+        if len(sample_test_data.shape) == 2:
+            sample_test_data_for_trans = sample_test_data_for_trans.unsqueeze(2).numpy()
+        sample_test_data_trans = dataloaders['test'].dataset.transform(sample_test_data_for_trans)
+
+        # Evaluate with base model
         prob_org, _ = eval_single_sample(model_erm, sample_test_data_trans)
         logger.add_org_prob_to_results_dict(idx, prob_org, sample_test_true_label)
 
@@ -128,6 +128,13 @@ if __name__ == "__main__":
                         help='Type of experiment to execute',
                         type=str)
     args = vars(parser.parse_args())
+
+    # Available experiment_type:
+    #   'pnml_cifar10'
+    #   'random_labels'
+    #   'out_of_dist_svhn'
+    #   'out_of_dist_noise'
+    #   'pnml_mnist'
 
     run_experiment(args['experiment_type'])
     print('Finish experiment')

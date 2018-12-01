@@ -75,12 +75,17 @@ def create_svhn_dataloaders(data_dir: str = './data', batch_size: int = 128, num
                             download=True,
                             transform=transforms.Compose([transforms.ToTensor(),
                                                           normalize]))
+
+    # Align as CIFAR10 dataset
     testset.test_data = testset.data
     testset.test_labels = testset.labels
+
     testloader = data.DataLoader(testset,
                                  batch_size=batch_size,
                                  shuffle=False,
                                  num_workers=num_workers)
+
+    # Classes name
     classes_cifar10 = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
     classes_svhn = ('1', '2', '3', '4', '5', '6', '7', '8', '9', '0')
 
@@ -329,14 +334,6 @@ def create_mnist_dataloaders(data_dir: str = './data', batch_size: int = 128, nu
     classes = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9')
 
     return trainloader, testloader, classes
-
-
-######
-# Functions for experiments utilities
-######
-def tensor_to_long_type(label):
-    label = int(label)
-    return label
 
 
 def dataloaders_noise(data_dir: str = './data', batch_size: int = 128, num_workers: int = 4):
