@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import copy
 import os
 
@@ -249,58 +247,6 @@ def create_cifar10_random_label_dataloaders(data_dir: str = './data', batch_size
     return trainloader, testloader, classes
 
 
-def create_cifar10_dataloaders_with_training_subset(data_dir: str = './data', batch_size: int = 128,
-                                                    num_workers: int = 4,
-                                                    trainset_size: int = 50000,
-                                                    adjust_sgd_update=False):
-    """
-    create train and test pytorch dataloaders for CIFAR10 dataset.
-    Train set is a subset of the orignal CIFAR10 dataset.
-    :param data_dir: the folder that will contain the data
-    :param batch_size: the size of the batch for test and train loaders.
-    :param trainset_size: the number of samples of the trainset
-    :param adjust_sgd_update: weather to upsample the trainset (make duplicate) so the total size will be as the original.
-    :param num_workers: number of cpu workers which loads the GPU with the dataset
-    :return: train and test loaders along with mapping between labels and class names
-    """
-    np.random.seed(12345)
-    trainset = datasets.CIFAR10(root=data_dir,
-                                train=True,
-                                download=True,
-                                transform=transforms.Compose([transforms.ToTensor(),
-                                                              normalize]))
-    trainset_size_org = len(trainset)
-
-    # Get trainset subset
-    trainset.train_data = trainset.train_data[:trainset_size]
-    trainset.train_labels = trainset.train_labels[:trainset_size]
-
-    if adjust_sgd_update is True:
-        if 50000 % trainset_size != 0:
-            raise NameError('trainset_size_org / trainset_size is not a int')
-        duplicate_trainset_num = int(trainset_size_org / trainset_size)
-        trainset.train_data = np.repeat(trainset.train_data, duplicate_trainset_num, axis=0)
-        trainset.train_labels = np.repeat(trainset.train_labels, duplicate_trainset_num, axis=0)
-
-    trainloader = data.DataLoader(trainset,
-                                  batch_size=batch_size,
-                                  shuffle=True,
-                                  num_workers=num_workers)
-
-    testset = datasets.CIFAR10(root=data_dir,
-                               train=False,
-                               download=True,
-                               transform=transforms.Compose([transforms.ToTensor(),
-                                                             normalize]))
-    testloader = data.DataLoader(testset,
-                                 batch_size=batch_size,
-                                 shuffle=False,
-                                 num_workers=num_workers)
-    classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
-
-    return trainloader, testloader, classes
-
-
 def create_mnist_dataloaders(data_dir: str = './data', batch_size: int = 128, num_workers: int = 4):
     """
     create train and test pytorch dataloaders for MNIST dataset
@@ -338,7 +284,7 @@ def create_mnist_dataloaders(data_dir: str = './data', batch_size: int = 128, nu
 
 def dataloaders_noise(data_dir: str = './data', batch_size: int = 128, num_workers: int = 4):
     """
-    create train and test pytorch dataloaders for CIFAR10 dataset
+    create trainloader for CIFAR10 dataset and testloader with noise images
     :param data_dir: the folder that will contain the data
     :param batch_size: the size of the batch for test and train loaders
     :param num_workers: number of cpu workers which loads the GPU with the dataset

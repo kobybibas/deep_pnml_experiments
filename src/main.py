@@ -13,7 +13,7 @@ from train_utilities import freeze_model_layers
 
 """
 Example of running:
-CUDA_VISIBLE_DEVICES=0 python src/main.py
+CUDA_VISIBLE_DEVICES=0 python src/main.py -t pnml_cifar10
 """
 
 

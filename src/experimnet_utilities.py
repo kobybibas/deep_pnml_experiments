@@ -22,15 +22,15 @@ class Experiment:
 
     def get_params(self):
         if self.exp_type == 'pnml_cifar10':
-            self.params = self.params['nml_vanilla']
+            self.params = self.params['pnml_cifar10']
         elif self.exp_type == 'random_labels':
             self.params = self.params['random_labels']
         elif self.exp_type == 'out_of_dist_svhn':
-            self.params = self.params['nml_vanilla']
+            self.params = self.params['pnml_cifar10']
         elif self.exp_type == 'out_of_dist_noise':
-            self.params = self.params['nml_vanilla']
+            self.params = self.params['pnml_cifar10']
         elif self.exp_type == 'pnml_mnist':
-            self.params = self.params['nml_mnist']
+            self.params = self.params['pnml_mnist']
         else:
             raise NameError('No experiment type: %s' % self.exp_type)
 
@@ -83,7 +83,6 @@ class Experiment:
                            'classes': classes}
 
         else:
-            dataloaders = {}
             raise NameError('No experiment type: %s' % self.exp_type)
 
         return dataloaders

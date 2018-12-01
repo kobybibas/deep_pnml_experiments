@@ -1,12 +1,10 @@
-from __future__ import print_function
-
 import numpy as np
 from torchvision.datasets import CIFAR10
 
 
 class NoiseDataset(CIFAR10):
     """
-    Create dataset with random noise images in the same stracture of CIFAR10
+    Create dataset with random noise images in the same structure of CIFAR10
     """
 
     def __init__(self, root, transform=None, target_transform=None):

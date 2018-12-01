@@ -62,8 +62,6 @@ class TrainClass:
         model = model.cuda() if torch.cuda.is_available() else model
         self.num_epochs = num_epochs
         train_loss, train_acc = torch.tensor([-1.]), torch.tensor([-1.])
-        test_loss, test_acc = torch.tensor([-1.]), torch.tensor([-1.])
-        epoch = 0
         epoch_time = 0
         lr = 0
 

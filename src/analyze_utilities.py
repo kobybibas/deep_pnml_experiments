@@ -93,27 +93,27 @@ def load_results_to_df(files, is_random_labels=False, is_out_of_dist=False):
     results_dict = load_dict_from_file_list(files)
 
     # NML
-    nml_df = result_dict_to_nml_df(results_dict, is_random_labels=is_random_labels, is_out_of_dist=is_out_of_dist)
-    statisic_nml_df = calc_statistic_from_df_single(nml_df).rename(columns={'statistics': 'nml'})
-    nml_df = nml_df.add_prefix('nml_')
-    nml_df = nml_df.rename(columns={'nml_log10_norm_factor': 'log10_norm_factor'})
+    pnml_df = result_dict_to_nml_df(results_dict, is_random_labels=is_random_labels, is_out_of_dist=is_out_of_dist)
+    statistic_pnml_df = calc_statistic_from_df_single(pnml_df).rename(columns={'statistics': 'nml'})
+    pnml_df = pnml_df.add_prefix('nml_')
+    pnml_df = pnml_df.rename(columns={'nml_log10_norm_factor': 'log10_norm_factor'})
 
     # ERM
     erm_df = result_dict_to_erm_df(results_dict, is_random_labels=is_random_labels, is_out_of_dist=is_out_of_dist)
-    statisic_erm_df = calc_statistic_from_df_single(erm_df).rename(columns={'statistics': 'erm'})
+    statistic_erm_df = calc_statistic_from_df_single(erm_df).rename(columns={'statistics': 'erm'})
     erm_df = erm_df.add_prefix('erm_')
 
     # genie
-    genie_df, statisic_genie_df = None, None
+    genie_df, statistic_genie_df = None, None
     if is_out_of_dist is False:
         genie_df = result_dict_to_genie_df(results_dict, is_random_labels=is_random_labels)
-        statisic_genie_df = calc_statistic_from_df_single(genie_df).rename(columns={'statistics': 'genie'})
+        statistic_genie_df = calc_statistic_from_df_single(genie_df).rename(columns={'statistics': 'genie'})
         genie_df = genie_df.add_prefix('genie_')
 
     # Merge and return
-    result_df = pd.concat([nml_df, erm_df, genie_df], axis=1)
-    statisic_df = pd.concat([statisic_nml_df, statisic_erm_df, statisic_genie_df], axis=1)
-    return result_df, statisic_df
+    result_df = pd.concat([pnml_df, erm_df, genie_df], axis=1)
+    statistic_df = pd.concat([statistic_pnml_df, statistic_erm_df, statistic_genie_df], axis=1)
+    return result_df, statistic_df
 
 
 def calc_statistic_from_df_single(result_df):
@@ -150,13 +150,13 @@ def result_dict_to_nml_df(results_dict, is_random_labels=False, is_out_of_dist=F
         nml_dict['entropy'].append(entropy(prob_nml, base=10))
 
     # Create df
-    nml_df = pd.DataFrame(nml_dict, index=loc)
+    pnml_df = pd.DataFrame(nml_dict, index=loc)
 
     # Add more columns
-    is_correct = np.array(nml_df[[str(x) for x in range(10)]].idxmax(axis=1)).astype(int) == np.array(
-        nml_df['true_label']).astype(int)
-    nml_df['is_correct'] = is_correct
-    return nml_df
+    is_correct = np.array(pnml_df[[str(x) for x in range(10)]].idxmax(axis=1)).astype(int) == np.array(
+        pnml_df['true_label']).astype(int)
+    pnml_df['is_correct'] = is_correct
+    return pnml_df
 
 
 def result_dict_to_erm_df(results_dict, is_random_labels=False, is_out_of_dist=False):
@@ -290,12 +290,12 @@ if __name__ == "__main__":
 
     tic = time.time()
     result_df_sample, statistics_df_sample = load_results_to_df([json_file_name])
-    # print('load_results_to_df: {0:.2f} [s]'.format(time.time() - tic))
+    print('load_results_to_df: {0:.2f} [s]'.format(time.time() - tic))
     tic = time.time()
     nml_df = result_dict_to_nml_df(results_dict_sample)
     print('result_dict_to_nml_df: {0:.2f} [s]'.format(time.time() - tic))
     tic = time.time()
-    statisic = calc_statistic_from_df_single(nml_df)
+    statistic = calc_statistic_from_df_single(nml_df)
     print('calc_statistic_from_df_single: {0:.2f} [s]'.format(time.time() - tic))
 
     a, b = create_twice_univ_df([nml_df, nml_df])

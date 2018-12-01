@@ -1,4 +1,4 @@
-'''
+"""
 Properly implemented ResNet-s for CIFAR10 as described in paper [1].
 The implementation and structure of this file is hugely influenced by [2]
 which is implemented for ImageNet and doesn't have option A for identity.
@@ -20,7 +20,7 @@ Reference:
 [2] https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py
 If you use this implementation in you work, please don't forget to mention the
 author, Yerlan Idelbayev.
-'''
+"""
 import os
 
 import torch
