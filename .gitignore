@@ -12,3 +12,5 @@ src/\.ipynb_checkpoints/
 **/*.pth
 
 **/*.pt
+
+**/*.log
