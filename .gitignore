@@ -1,14 +1,14 @@
 
 src/__pycache__/
 
-output/
-
-data/cifar-10-batches-py/
-
-data/cifar-10-python\.tar\.gz
+data/*
 
 \.idea/
 
 src/\.ipynb_checkpoints/
 
 \.DS_Store
+
+**/*.pth
+
+**/*.pt
