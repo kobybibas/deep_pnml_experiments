@@ -1,0 +1,34 @@
+{
+    "batch_size": 128,
+    "fit_to_sample": {
+        "epochs": 10,
+        "gamma": 0.1,
+        "lr": 0.0001,
+        "momentum": 0.9,
+        "step_size": [
+            3,
+            6,
+            9
+        ],
+        "test_end_idx": 1000,
+        "test_start_idx": 0,
+        "weight_decay": 0.0001
+    },
+    "initial_training": {
+        "do_initial_training": true,
+        "epochs": 100,
+        "gamma": 0.1,
+        "loss_goal": 0.0,
+        "lr": 0.01,
+        "momentum": 0.9,
+        "pretrained_model_path": "",
+        "step_size": [
+            10,
+            40,
+            80
+        ],
+        "weight_decay": 0.0001
+    },
+    "num_workers": 50,
+    "unfreeze_layer": 0
+}
