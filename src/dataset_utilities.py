@@ -2,15 +2,18 @@ import copy
 import os
 
 import numpy as np
+import os.path
 import torch
 from torch.utils import data
 from torchvision import transforms, datasets
 
+from adversarial_utilities import create_adversarial_sign_dataset
 from noise_dataset_class import NoiseDataset
 
 # Normalization for CIFAR10 dataset
-normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                 std=[0.229, 0.224, 0.225])
+mean_cifar10 = [0.485, 0.456, 0.406]
+std_cifar10 = [0.229, 0.224, 0.225]
+normalize = transforms.Normalize(mean=mean_cifar10, std=std_cifar10)
 
 
 def insert_sample_to_dataset(trainloader, sample_to_insert_data, sample_to_insert_label):
@@ -314,3 +317,85 @@ def dataloaders_noise(data_dir: str = './data', batch_size: int = 128, num_worke
                    'classes': classes,
                    'classes_noise': ('Noise',) * 10}
     return dataloaders
+
+
+## inhereny cifa
+# r10 dataset to add epsilon adeverserial noise
+class CIFAR10Adversarial(datasets.CIFAR10):
+    def __init__(self, epsilon=0.05, adversarial_sign_dataset_path='./data/adversarial_sign', **kwargs):
+        super(CIFAR10Adversarial, self).__init__(**kwargs)
+        self.adversarial_sign_dataset_path = adversarial_sign_dataset_path
+        self.epsilon = epsilon
+
+        for index in range(self.test_data.shape[0]):
+            sign = np.load(os.path.join(self.adversarial_sign_dataset_path, str(index) + '.npy'))
+            sign = np.transpose(sign, (1, 2, 0))
+            self.test_data[index] = self.test_data[index] + (epsilon * 256) * sign
+
+    # def __getitem__(self, index):
+    #     """
+    #     Args:
+    #         index (int): Index
+    #
+    #     Returns:
+    #         tuple: (image, target) where target is index of the target class.
+    #     """
+    #     if self.train:
+    #         img, target = self.train_data[index], self.train_labels[index]
+    #     else:
+    #         img, target = self.test_data[index], self.test_labels[index]
+    #
+    #     # doing this so that it is consistent with all other datasets
+    #     # to return a PIL Image
+    #     img = Image.fromarray(img)
+    #
+    #     if self.transform is not None:
+    #         img = self.transform(img)
+    #
+    #     if self.target_transform is not None:
+    #         target = self.target_transform(target)
+    #
+    #     # Add adversarial noise
+    #     sign = np.load(os.path.join(self.adversarial_sign_dataset_path, str(index) + '.npy'))
+    #     img = img + self.epsilon * torch.Tensor(sign)
+    #
+    #     return img, target
+
+
+def create_adversarial_cifar10_dataloaders(data_dir: str = './data',
+                                           adversarial_dir=os.path.join('data', 'adversarial_sign'),
+                                           epsilon=0.05,
+                                           batch_size: int = 128,
+                                           num_workers: int = 4):
+    """
+    create train and test pytorch dataloaders for CIFAR10 dataset
+    :param data_dir: the folder that will contain the data
+    :param batch_size: the size of the batch for test and train loaders
+    :param num_workers: number of cpu workers which loads the GPU with the dataset
+    :return: train and test loaders along with mapping between labels and class names
+    """
+    trainset = datasets.CIFAR10(root=data_dir,
+                                train=True,
+                                download=True,
+                                transform=transforms.Compose([transforms.ToTensor(),
+                                                              normalize]))
+    trainloader = data.DataLoader(trainset,
+                                  batch_size=batch_size,
+                                  shuffle=False,
+                                  num_workers=num_workers)
+
+    adversarial_sign_dataset_path = create_adversarial_sign_dataset(data_dir, output_folder=adversarial_dir)
+    testset = CIFAR10Adversarial(root=data_dir,
+                                 train=False,
+                                 download=True,
+                                 transform=transforms.Compose([transforms.ToTensor(),
+                                                               normalize]),
+                                 adversarial_sign_dataset_path=adversarial_sign_dataset_path,
+                                 epsilon=epsilon)
+    testloader = data.DataLoader(testset,
+                                 batch_size=batch_size,
+                                 shuffle=False,
+                                 num_workers=num_workers)
+    classes = ('plane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+
+    return trainloader, testloader, classes

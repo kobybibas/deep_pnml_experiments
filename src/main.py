@@ -35,10 +35,12 @@ def run_experiment(experiment_type: str):
     logger.info('OutputDirectory: %s' % logger.output_folder)
     with open(os.path.join(logger.output_folder, 'params.json'), 'w', encoding='utf8') as outfile:
         outfile.write(json.dumps(params, indent=4, sort_keys=True))
+    logger.info(params)
 
     ################
     # Load datasets
     data_folder = './data'
+    logger.info('Load datasets: %s' % data_folder)
     dataloaders = experiment_h.get_dataloaders(data_folder)
 
     ################
