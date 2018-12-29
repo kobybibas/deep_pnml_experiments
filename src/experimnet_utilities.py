@@ -1,3 +1,5 @@
+import os
+
 from dataset_utilities import create_adversarial_cifar10_dataloaders
 from dataset_utilities import create_cifar10_dataloaders
 from dataset_utilities import create_cifar10_random_label_dataloaders
@@ -7,7 +9,6 @@ from dataset_utilities import dataloaders_noise
 from mpl import Net
 from resnet import resnet20, load_pretrained_resnet20_cifar10_model
 from wide_resnet import WideResNet
-import os
 
 
 class Experiment:

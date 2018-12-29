@@ -8,7 +8,8 @@ import torch.nn as nn
 from torch.utils import data
 from torchvision import transforms, datasets
 
-from resnet import resnet20, load_pretrained_resnet20_cifar10_model
+from resnet import load_pretrained_resnet32_cifar10_model
+from resnet import resnet32
 
 # Normalization for CIFAR10 dataset
 mean_cifar10 = [0.485, 0.456, 0.406]
@@ -18,11 +19,10 @@ normalize = transforms.Normalize(mean=mean_cifar10, std=std_cifar10)
 
 def create_adversarial_sign_dataset(data_folder='./data',
                                     output_folder=os.path.join('data', 'adversarial_sign'),
-                                    model=load_pretrained_resnet20_cifar10_model(resnet20())):
+                                    model=load_pretrained_resnet32_cifar10_model(resnet32())):
     if os.path.exists(output_folder):
         return output_folder
     pathlib.Path(output_folder).mkdir(parents=True, exist_ok=True)
-
     testset = datasets.CIFAR10(root=data_folder,
                                train=False,
                                download=True,

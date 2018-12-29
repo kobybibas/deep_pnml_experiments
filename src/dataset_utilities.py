@@ -319,57 +319,38 @@ def dataloaders_noise(data_dir: str = './data', batch_size: int = 128, num_worke
     return dataloaders
 
 
-## inhereny cifa
-# r10 dataset to add epsilon adeverserial noise
 class CIFAR10Adversarial(datasets.CIFAR10):
-    def __init__(self, epsilon=0.05, adversarial_sign_dataset_path='./data/adversarial_sign', **kwargs):
+    """
+    Implementing adversarial attack to CIFAR10 testset.
+    """
+
+    def __init__(self, epsilon=0.005, adversarial_sign_dataset_path='./data/adversarial_sign', **kwargs):
+        """
+
+        :param epsilon: the strength of the attack. Fast gradient sign attack.
+        :param adversarial_sign_dataset_path: path in which the gradients sign from the back propagation is saved into.
+        :param kwargs: initial init arguments.
+        """
         super(CIFAR10Adversarial, self).__init__(**kwargs)
         self.adversarial_sign_dataset_path = adversarial_sign_dataset_path
         self.epsilon = epsilon
-
         for index in range(self.test_data.shape[0]):
             sign = np.load(os.path.join(self.adversarial_sign_dataset_path, str(index) + '.npy'))
             sign = np.transpose(sign, (1, 2, 0))
-            self.test_data[index] = self.test_data[index] + (epsilon * 256) * sign
-
-    # def __getitem__(self, index):
-    #     """
-    #     Args:
-    #         index (int): Index
-    #
-    #     Returns:
-    #         tuple: (image, target) where target is index of the target class.
-    #     """
-    #     if self.train:
-    #         img, target = self.train_data[index], self.train_labels[index]
-    #     else:
-    #         img, target = self.test_data[index], self.test_labels[index]
-    #
-    #     # doing this so that it is consistent with all other datasets
-    #     # to return a PIL Image
-    #     img = Image.fromarray(img)
-    #
-    #     if self.transform is not None:
-    #         img = self.transform(img)
-    #
-    #     if self.target_transform is not None:
-    #         target = self.target_transform(target)
-    #
-    #     # Add adversarial noise
-    #     sign = np.load(os.path.join(self.adversarial_sign_dataset_path, str(index) + '.npy'))
-    #     img = img + self.epsilon * torch.Tensor(sign)
-    #
-    #     return img, target
+            self.test_data[index] = np.clip(self.test_data[index] + (epsilon * 255) * sign, 0, 255)
 
 
 def create_adversarial_cifar10_dataloaders(data_dir: str = './data',
-                                           adversarial_dir=os.path.join('data', 'adversarial_sign'),
-                                           epsilon=0.05,
+                                           adversarial_dir: str = os.path.join('data',
+                                                                               'adversarial_sign'),
+                                           epsilon: float = 0.05,
                                            batch_size: int = 128,
                                            num_workers: int = 4):
     """
     create train and test pytorch dataloaders for CIFAR10 dataset
     :param data_dir: the folder that will contain the data
+    :param adversarial_dir: the output dir to which the gradient adversarial sign will be saved.
+    :param epsilon: the additive gradient strength to be added to the image.
     :param batch_size: the size of the batch for test and train loaders
     :param num_workers: number of cpu workers which loads the GPU with the dataset
     :return: train and test loaders along with mapping between labels and class names

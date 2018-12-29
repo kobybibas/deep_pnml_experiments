@@ -30,7 +30,7 @@ import torch.nn.init as init
 from urllib.request import urlretrieve
 
 __all__ = ['ResNet', 'resnet20', 'resnet32', 'resnet44', 'resnet56', 'resnet110', 'resnet1202',
-           'load_pretrained_resnet20_cifar10_model']
+           'load_pretrained_resnet20_cifar10_model', 'load_pretrained_resnet32_cifar10_model']
 
 
 def _weights_init(m):
@@ -160,6 +160,27 @@ def load_pretrained_resnet20_cifar10_model(model):
     # Download pretrained weights if needed
     if not os.path.exists(dst_model_path):
         src_model_path = "https://github.com/akamaster/pytorch_resnet_cifar10/raw/master/pretrained_models/resnet20.th"
+        urlretrieve(src_model_path, dst_model_path)
+
+    # Load weights into the model
+    model = torch.nn.DataParallel(model)  # The pretrained model is from DataParallel kind to adjust to it
+    model.cuda() if torch.cuda.is_available() else model
+    checkpoint = torch.load(dst_model_path, map_location=lambda storage, loc: storage)
+    model.load_state_dict(checkpoint['state_dict'])
+    model = model.module
+    return model
+
+
+def load_pretrained_resnet32_cifar10_model(model):
+    # Define pretrained model path
+    output_folder = 'models'
+    if not os.path.exists(output_folder):
+        os.makedirs(output_folder)
+    dst_model_path = os.path.join(output_folder, "resnet32_pretrained_cifar10.th")
+
+    # Download pretrained weights if needed
+    if not os.path.exists(dst_model_path):
+        src_model_path = "https://github.com/akamaster/pytorch_resnet_cifar10/raw/master/pretrained_models/resnet32.th"
         urlretrieve(src_model_path, dst_model_path)
 
     # Load weights into the model

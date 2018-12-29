@@ -71,7 +71,7 @@
         "batch_size": 128,
         "num_workers": 4,
         "freeze_layer": 5,
-        "epsilon": 0.005,
+        "epsilon": 0.001,
         "fit_to_sample": {
             "epochs": 10,
             "lr": 0.001,
