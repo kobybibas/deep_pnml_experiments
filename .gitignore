@@ -14,3 +14,5 @@ src/\.ipynb_checkpoints/
 **/*.pt
 
 **/*.log
+
+output/
