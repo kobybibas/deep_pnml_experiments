@@ -31,3 +31,7 @@ The experimnet options are:
 5. pnml_mnist: runining pNML on MNIST dataset.
 
 The parameters of each experimnet can be change in the parameters file: src\params.json
+
+Raw results for Nips 2019 are located here:
+https://drive.google.com/open?id=1K9-Iv0w2Etr-2btTUsR3SBfmK7Z7Bx-Y
+

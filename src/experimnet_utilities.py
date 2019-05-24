@@ -6,6 +6,7 @@ from dataset_utilities import create_cifar10_random_label_dataloaders
 from dataset_utilities import create_mnist_dataloaders
 from dataset_utilities import create_svhn_dataloaders
 from dataset_utilities import dataloaders_noise
+from lenet import LeNet
 from mpl import Net
 from resnet import resnet20, load_pretrained_resnet20_cifar10_model
 from wide_resnet import WideResNet
@@ -18,13 +19,15 @@ class Experiment:
                             'out_of_dist_svhn',
                             'out_of_dist_noise',
                             'pnml_mnist',
-                            'adversarial']:
+                            'adversarial',
+                            'pnml_cifar10_lenet']:
             raise NameError('No experiment type: %s' % type)
         self.params = params
         self.exp_type = exp_type
         self.executed_get_params = False
 
     def get_params(self):
+        debug_flags = self.params['debug_flags']
         if self.exp_type == 'pnml_cifar10':
             self.params = self.params['pnml_cifar10']
         elif self.exp_type == 'random_labels':
@@ -37,8 +40,13 @@ class Experiment:
             self.params = self.params['pnml_mnist']
         elif self.exp_type == 'adversarial':
             self.params = self.params['adversarial']
+        elif self.exp_type == 'pnml_cifar10_lenet':
+            self.params = self.params['pnml_cifar10_lenet']
         else:
             raise NameError('No experiment type: %s' % self.exp_type)
+
+        # Add debug params
+        self.params['debug_flags'] = debug_flags
 
         self.executed_get_params = True
         return self.params
@@ -48,7 +56,7 @@ class Experiment:
         if self.executed_get_params is False:
             _ = self.get_params()
 
-        if self.exp_type == 'pnml_cifar10':
+        if self.exp_type in ['pnml_cifar10', 'pnml_cifar10_lenet']:
             trainloader, testloader, classes = create_cifar10_dataloaders(data_folder,
                                                                           self.params['batch_size'],
                                                                           self.params['num_workers'])
@@ -117,6 +125,8 @@ class Experiment:
             model = Net()
         elif self.exp_type == 'adversarial':
             model = load_pretrained_resnet20_cifar10_model(resnet20())
+        elif self.exp_type == 'pnml_cifar10_lenet':
+            model = LeNet()  # VGG('VGG16')
         else:
             raise NameError('No experiment type: %s' % self.exp_type)
 
@@ -136,6 +146,8 @@ class Experiment:
             name = 'pnml_mnist'
         elif self.exp_type == 'adversarial':
             name = 'adversarial'
+        elif self.exp_type == 'pnml_cifar10_lenet':
+            name = 'pnml_cifar10_lenet'
         else:
             raise NameError('No experiment type: %s' % self.exp_type)
 
