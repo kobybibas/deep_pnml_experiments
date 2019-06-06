@@ -10,15 +10,15 @@ Get started:
 
 2. Intsall requeirement 
 
-'''
+```
 pip install -r requirements.txt
-'''
+```
 
 3. Run basic experimnet:
 
-'''
+```
 CUDA_VISIBLE_DEVICES=0 python src/main.py -t pnml_cifar10
-'''
+```
 
 ## Experimnets:
 
@@ -29,9 +29,10 @@ The experimnet options are:
 3. out_of_dist_svhn: trainset is CIFAR10. Execute pNML on SVHN dataset.
 4. out_of_dist_noise:  trainset is CIFAR10. Execute pNML on Noise images.
 5. pnml_mnist: runining pNML on MNIST dataset.
+4. pnml_cifar10_lenet: trainset is CIFAR10. Execute pNML with LeNet architecture.
 
 The parameters of each experimnet can be change in the parameters file: src\params.json
 
 Raw results for Nips 2019 are located here:
-https://drive.google.com/open?id=1K9-Iv0w2Etr-2btTUsR3SBfmK7Z7Bx-Y
+https://drive.google.com/file/d/1PouRaGxw6TNcqPOqUjpQ3G5TXYYhORlW/view?usp=sharing
 
