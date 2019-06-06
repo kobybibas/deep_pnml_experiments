@@ -16,3 +16,7 @@ src/\.ipynb_checkpoints/
 **/*.log
 
 output/
+
+notebooks/\.ipynb_checkpoints/
+
+notebooks/__pycache__/
