@@ -1,8 +1,12 @@
-# deep_pnml
+# Deep pNML: Predictive Normalized Maximum Likelihood for Deep Neural Networks
+Koby Bibas, Yaniv Fogel and Meir Feder
 
+This is the official implementioation of "Deep pNML: Predictive Normalized Maximum Likelihood for Deep Neural Networks"
 
-This is the official implementioation of TBD
+https://arxiv.org/abs/1904.12286
 
+### Abstract
+The Predictive Normalized Maximum Likelihood (pNML) scheme has been recently suggested for universal learning in the individual setting, where both the training and test samples are individual data. The goal of universal learning is to compete with a "genie" or reference learner that knows the data values, but is restricted to use a learner from a given model class. The pNML minimizes the associated regret for any possible value of the unknown label. Furthermore, its min-max regret can serve as a pointwise measure of learnability for the specific training and data sample. In this work we examine the pNML and its associated learnability measure for the Deep Neural Network (DNN) model class. As shown, the pNML outperforms the commonly used Empirical Risk Minimization (ERM) approach and provides robustness against adversarial attacks. Together with its learnability measure it can detect out of distribution test examples, be tolerant to noisy labels and serve as a confidence measure for the ERM. Finally, we extend the pNML to a "twice universal" solution, that provides universality for model class selection and generates a learner competing with the best one from all model classes.
 
 Get started:
 
@@ -33,6 +37,18 @@ The experimnet options are:
 
 The parameters of each experimnet can be change in the parameters file: src\params.json
 
-Raw results for Nips 2019 are located here:
+Raw results for Nips 2019:
 https://drive.google.com/file/d/1PouRaGxw6TNcqPOqUjpQ3G5TXYYhORlW/view?usp=sharing
+
+### Citing
+```
+@misc{bibas2019deep,
+    title={Deep pNML: Predictive Normalized Maximum Likelihood for Deep Neural Networks},
+    author={Koby Bibas and Yaniv Fogel and Meir Feder},
+    year={2019},
+    eprint={1904.12286},
+    archivePrefix={arXiv},
+    primaryClass={cs.LG}
+}
+```
 
