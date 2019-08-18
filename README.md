@@ -5,9 +5,6 @@ This is the official implementioation of "Deep pNML: Predictive Normalized Maxim
 
 https://arxiv.org/abs/1904.12286
 
-### Abstract
-The Predictive Normalized Maximum Likelihood (pNML) scheme has been recently suggested for universal learning in the individual setting, where both the training and test samples are individual data. The goal of universal learning is to compete with a "genie" or reference learner that knows the data values, but is restricted to use a learner from a given model class. The pNML minimizes the associated regret for any possible value of the unknown label. Furthermore, its min-max regret can serve as a pointwise measure of learnability for the specific training and data sample. In this work we examine the pNML and its associated learnability measure for the Deep Neural Network (DNN) model class. As shown, the pNML outperforms the commonly used Empirical Risk Minimization (ERM) approach and provides robustness against adversarial attacks. Together with its learnability measure it can detect out of distribution test examples, be tolerant to noisy labels and serve as a confidence measure for the ERM. Finally, we extend the pNML to a "twice universal" solution, that provides universality for model class selection and generates a learner competing with the best one from all model classes.
-
 ## Get started:
 
 1. Clone the repository
