@@ -21,6 +21,26 @@ pip install -r requirements.txt
 CUDA_VISIBLE_DEVICES=0 python src/main.py -t pnml_cifar10
 ```
 
+4. Analyze the outputs using jupyter notebooks:
+
+```
+├── notebooks
+│   ├── adversarial_attack.ipynb
+│   ├── distributions_metrics.py
+│   ├── mixture_lenet_cifar10.ipynb
+│   ├── mixture_out_of_distribution.ipynb
+│   ├── mixture_random_labels.ipynb
+│   ├── mixture_resnet18_cifar10.ipynb
+│   ├── model_selection_exploration.ipynb
+│   ├── out_of_distribution.ipynb
+│   ├── plot_functions.ipynb
+│   ├── pnml_lenet_cifar10.ipynb
+│   ├── pnml_resnet18_cifar10.ipynb
+│   ├── random_labels.ipynb
+│   ├── result_summary.ipynb
+│   └── twice_universality.ipynb
+```
+
 ## Experimnets:
 
 The experimnet options are:
@@ -34,8 +54,11 @@ The experimnet options are:
 
 The parameters of each experimnet can be change in the parameters file: src\params.json
 
-Raw results for Nips 2019:
-https://drive.google.com/file/d/1PouRaGxw6TNcqPOqUjpQ3G5TXYYhORlW/view?usp=sharing
+## Results
+
+Raw results are in:
+https://drive.google.com/open?id=1sMCZo2aoei7UxahQONAOf8gLp5Hjb1WQ
+
 
 ### Citing
 ```
