@@ -19,7 +19,10 @@ normalize = transforms.Normalize(mean=mean_cifar10, std=std_cifar10)
 
 def create_adversarial_sign_dataset(data_folder='./data',
                                     output_folder=os.path.join('data', 'adversarial_sign'),
-                                    model=load_pretrained_resnet32_cifar10_model(resnet32())):
+                                    model=None):
+    if model is None:
+        model = load_pretrained_resnet32_cifar10_model(resnet32())
+
     if os.path.exists(output_folder):
         return output_folder
     pathlib.Path(output_folder).mkdir(parents=True, exist_ok=True)
